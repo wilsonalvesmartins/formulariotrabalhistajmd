@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrevista Trabalhista Inteligente</title>
+    <!-- Tailwind CSS para estilização -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js para converter Markdown do Gemini em HTML -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- html2pdf.js para gerar o PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Phosphor Icons para ícones -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
+        /* Estilos adicionais para o PDF e formatação Markdown */
         #resultado-markdown h1 { font-size: 1.5rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1e3a8a; }
         #resultado-markdown h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #2563eb; }
         #resultado-markdown h3 { font-size: 1.125rem; font-weight: bold; margin-top: 0.75rem; margin-bottom: 0.25rem; }
@@ -19,35 +24,40 @@
         #resultado-markdown strong { font-weight: 600; }
         
         .loader {
-            border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen relative">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
-    <!-- Header & Configuração -->
     <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="mb-8 flex items-center justify-between">
+        
+        <!-- Header -->
+        <header class="mb-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-blue-900 flex items-center gap-2">
+                <h1 class="text-3xl font-bold text-blue-900 flex items-center gap-2 justify-center sm:justify-start">
                     <i class="ph ph-scale"></i> Entrevista Trabalhista
                 </h1>
                 <p class="text-gray-500 mt-1">Assistente com IA para análise de casos e elaboração de pedidos.</p>
             </div>
-            
-            <!-- Botão Configuração -->
-            <button onclick="document.getElementById('modal-config').classList.remove('hidden')" class="p-2 text-gray-400 hover:text-blue-600 bg-white rounded-full shadow-sm border border-gray-200 transition" title="Configurar API">
-                <i class="ph ph-gear text-2xl"></i>
-            </button>
         </header>
 
-        <!-- Estrutura Principal (Formulário e Resultado) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Formulário -->
+            
+            <!-- Coluna do Formulário -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <form id="interview-form" class="space-y-5">
                     
+                    <!-- Dados Pessoais -->
                     <div class="space-y-4">
                         <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
                             <i class="ph ph-user"></i> Dados do Cliente
@@ -85,6 +95,7 @@
                         </div>
                     </div>
 
+                    <!-- Condições de Trabalho -->
                     <div class="space-y-4 pt-2">
                         <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
                             <i class="ph ph-hard-hat"></i> Condições de Trabalho
@@ -118,6 +129,7 @@
                         </div>
                     </div>
 
+                    <!-- Verbas Rescisórias e Benefícios -->
                     <div class="space-y-4 pt-2">
                         <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
                             <i class="ph ph-money"></i> Verbas e Direitos
@@ -148,10 +160,10 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">FGTS atrasado?</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">FGTS está atrasado/não depositado?</label>
                                 <select id="fgts" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition bg-white">
                                     <option value="Não sabe / Precisa tirar extrato">Não sabe / Precisa tirar extrato</option>
-                                    <option value="Sim, totalmente sem depósito">Sim, sem depósito</option>
+                                    <option value="Sim, totalmente sem depósito">Sim, totalmente sem depósito</option>
                                     <option value="Sim, com falhas (parcial)">Sim, parcial</option>
                                     <option value="Não, está em dia">Não, está em dia</option>
                                 </select>
@@ -159,24 +171,26 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Conhece a CCT da Categoria?</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Conhece a CCT da Categoria? (Sindicato)</label>
                             <input type="text" id="cct" placeholder="Ex: Não, ou Sim (Sindicato dos Comerciários)" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
                         </div>
                     </div>
 
+                    <!-- Outras Observações -->
                     <div class="pt-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Outros Detalhes</label>
-                        <textarea id="detalhes_extras" rows="3" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="Adicione qualquer outra informação..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Outros Detalhes (Assédio, acidentes, etc.)</label>
+                        <textarea id="detalhes_extras" rows="3" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="Adicione qualquer outra informação relevante do caso..."></textarea>
                     </div>
 
                     <button type="submit" id="btn-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 flex justify-center items-center gap-2">
                         <i class="ph ph-sparkle text-xl"></i>
                         Analisar Caso e Gerar Pedidos
                     </button>
+                    
                 </form>
             </div>
 
-            <!-- Resultado -->
+            <!-- Coluna do Resultado -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col h-full">
                 <h2 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4 flex items-center justify-between">
                     <span class="flex items-center gap-2">
@@ -187,61 +201,43 @@
                     </button>
                 </h2>
 
+                <!-- Estado Inicial / Vazio -->
                 <div id="estado-vazio" class="flex-1 flex flex-col items-center justify-center text-gray-400 py-12">
                     <i class="ph ph-magic-wand text-5xl mb-3"></i>
-                    <p class="text-center">Preencha o formulário e clique em "Analisar Caso".</p>
+                    <p class="text-center">Preencha o formulário e clique em "Analisar Caso" para a inteligência artificial gerar o resumo e os pedidos jurídicos.</p>
                 </div>
 
+                <!-- Estado Carregando -->
                 <div id="estado-carregando" class="hidden flex-1 flex flex-col items-center justify-center py-12">
                     <div class="loader mb-4"></div>
-                    <p class="text-blue-600 font-medium">Analisando informações no servidor...</p>
+                    <p class="text-blue-600 font-medium">O Gemini está analisando as informações trabalhistas...</p>
+                    <p class="text-sm text-gray-500 mt-2">Isso pode levar alguns segundos.</p>
                 </div>
 
+                <!-- Estado Erro -->
                 <div id="estado-erro" class="hidden flex-1 flex flex-col items-center justify-center py-12 text-red-500">
                     <i class="ph ph-warning-circle text-5xl mb-3"></i>
-                    <p class="text-center font-medium" id="mensagem-erro">Erro ao comunicar.</p>
-                    <button onclick="esconderErro()" class="mt-4 text-sm underline">Voltar</button>
+                    <p class="text-center font-medium" id="mensagem-erro">Ocorreu um erro ao comunicar com a IA.</p>
+                    <button onclick="esconderErro()" class="mt-4 text-sm underline">Tentar novamente</button>
                 </div>
 
+                <!-- Resultado -->
                 <div id="conteudo-resultado" class="hidden flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- O contéudo será injetado aqui pelo marked.js para formatação e pelo html2pdf -->
                     <div id="documento-pdf-container" class="p-2">
                         <div id="resultado-markdown" class="text-gray-800 text-sm"></div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Modal de Configuração -->
-    <div id="modal-config" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <i class="ph ph-lock-key text-blue-600"></i> Configuração da VPS
-            </h3>
-            <p class="text-sm text-gray-500 mb-4">Insira a senha mestra para salvar a chave do Gemini diretamente no servidor (backend).</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Sistema</label>
-                    <input type="password" id="config-password" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none" placeholder="Sua senha secreta">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave API (Gemini)</label>
-                    <input type="password" id="config-apikey" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none" placeholder="AIzaSy...">
-                </div>
             </div>
-
-            <div class="mt-6 flex justify-end gap-3">
-                <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition">Cancelar</button>
-                <button onclick="salvarConfiguracao()" id="btn-save-config" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition flex items-center gap-2">
-                    <i class="ph ph-floppy-disk"></i> Salvar no Servidor
-                </button>
-            </div>
-            <p id="config-msg" class="text-sm mt-3 text-center hidden"></p>
         </div>
     </div>
 
     <script>
+        // API Key fornecida pelo ambiente dinamicamente. Não alterar.
+        const apiKey = "";
+        
+        // Exibir/Esconder campo de quantidade de férias
         function toggleFeriasInput() {
             const select = document.getElementById('ferias_vencidas');
             const divQuantas = document.getElementById('div_quantas_ferias');
@@ -253,6 +249,24 @@
             }
         }
 
+        // Sistema de retry exponencial para chamadas à API
+        async function fetchWithRetry(url, options, retries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`Erro na API (Status ${response.status})`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    console.log(`Tentativa ${i + 1} falhou, tentando novamente...`);
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
+
         function mostrarEstado(id) {
             ['estado-vazio', 'estado-carregando', 'estado-erro', 'conteudo-resultado'].forEach(el => {
                 document.getElementById(el).classList.add('hidden');
@@ -260,54 +274,15 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        function esconderErro() { mostrarEstado('estado-vazio'); }
-
-        // Nova função para salvar a chave de API no backend
-        async function salvarConfiguracao() {
-            const password = document.getElementById('config-password').value;
-            const apiKey = document.getElementById('config-apikey').value;
-            const msgEl = document.getElementById('config-msg');
-            const btn = document.getElementById('btn-save-config');
-            
-            btn.disabled = true;
-            btn.innerHTML = 'Salvando...';
-            msgEl.classList.remove('hidden');
-
-            try {
-                const res = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password, apiKey })
-                });
-                
-                const data = await res.json();
-                
-                if (data.success) {
-                    msgEl.className = 'text-sm mt-3 text-center text-green-600 font-medium';
-                    msgEl.innerText = data.message;
-                    setTimeout(() => {
-                        document.getElementById('modal-config').classList.add('hidden');
-                        msgEl.classList.add('hidden');
-                        document.getElementById('config-password').value = '';
-                        document.getElementById('config-apikey').value = '';
-                    }, 2000);
-                } else {
-                    msgEl.className = 'text-sm mt-3 text-center text-red-600 font-medium';
-                    msgEl.innerText = data.message;
-                }
-            } catch (error) {
-                msgEl.className = 'text-sm mt-3 text-center text-red-600 font-medium';
-                msgEl.innerText = 'Erro ao conectar com o servidor.';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar no Servidor';
-            }
+        function esconderErro() {
+            mostrarEstado('estado-vazio');
         }
 
-        // Envio do formulário
+        // Listener do Formulário
         document.getElementById('interview-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Coletar Dados
             const dados = {
                 nome: document.getElementById('nome').value,
                 data_entrada: document.getElementById('data_entrada').value ? new Date(document.getElementById('data_entrada').value).toLocaleDateString('pt-BR') : 'Não informada',
@@ -316,12 +291,12 @@
                 ctps: document.getElementById('ctps').value,
                 insalubridade_periculosidade: document.getElementById('insalubridade_periculosidade').value,
                 recebia_adicional: document.getElementById('recebia_adicional').value,
-                horario_trabalho: document.getElementById('horario_trabalho').value || 'Não informado',
+                horario_trabalho: document.getElementById('horario_trabalho').value || 'Não informado detalhadamente',
                 ferias_vencidas: document.getElementById('ferias_vencidas').value,
                 quantas_ferias: document.getElementById('quantas_ferias').value || '0',
                 decimo_terceiro: document.getElementById('decimo_terceiro').value,
                 fgts: document.getElementById('fgts').value,
-                cct: document.getElementById('cct').value || 'Não sabe',
+                cct: document.getElementById('cct').value || 'Não sabe/Não informado',
                 detalhes_extras: document.getElementById('detalhes_extras').value || 'Nenhum detalhe extra.'
             };
 
@@ -332,7 +307,15 @@
             
             mostrarEstado('estado-carregando');
 
-            const systemPrompt = `Você é um Assistente Jurídico especializado em Direito do Trabalho Brasileiro (CLT). Seu objetivo é analisar dados de uma entrevista, gerar um resumo profissional do caso e listar os principais pedidos para uma Reclamação Trabalhista. Responda EXCLUSIVAMENTE em formato Markdown. Não crie a petição inicial.`;
+            // Construir Prompt para o Gemini
+            const systemPrompt = `Você é um Assistente Jurídico especializado em Direito do Trabalho Brasileiro (CLT). Seu objetivo é analisar dados de uma entrevista com um trabalhador, gerar um resumo profissional do caso e listar os principais pedidos para uma eventual Reclamação Trabalhista (ex: horas extras, verbas rescisórias, reconhecimento de vínculo, adicional de insalubridade, etc.).
+
+Regras de Formatação:
+- Responda EXCLUSIVAMENTE em formato Markdown.
+- Use títulos adequados (## Resumo do Caso, ## Principais Pedidos, etc).
+- Seja objetivo, técnico e claro.
+- Não crie a petição inicial, apenas o resumo e a lista de pedidos.
+- Mencione os dados do cliente no topo do relatório.`;
 
             const userPrompt = `Análise do Cliente:
 - Nome: ${dados.nome}
@@ -342,39 +325,49 @@
 - Ambiente Insalubre/Perigoso: ${dados.insalubridade_periculosidade}
 - Recebimento do Adicional: ${dados.recebia_adicional}
 - Horário de Trabalho e Escala: ${dados.horario_trabalho}
-- Férias Vencidas: ${dados.ferias_vencidas} (Quant: ${dados.quantas_ferias})
+- Férias Vencidas: ${dados.ferias_vencidas} (Quantidade: ${dados.quantas_ferias})
 - 13º Salário: ${dados.decimo_terceiro}
-- FGTS: ${dados.fgts}
-- CCT: ${dados.cct}
-- Extras: ${dados.detalhes_extras}
+- Situação do FGTS: ${dados.fgts}
+- Convenção Coletiva (CCT): ${dados.cct}
+- Observações Extras: ${dados.detalhes_extras}
 
-Gere o relatório e a lista de pedidos.`;
+Por favor, gere o relatório de análise e a lista de pedidos trabalhistas com base nesses fatos.`;
 
             try {
-                // AGORA CHAMA O SEU PRÓPRIO BACKEND, E NÃO MAIS A API DO GOOGLE DIRETO!
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userPrompt, systemPrompt })
-                });
+                // Chamada à API usando o modelo correto conforme instruções do Canvas
+                const response = await fetchWithRetry(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: userPrompt }]
+                            }],
+                            systemInstruction: {
+                                parts: [{ text: systemPrompt }]
+                            }
+                        })
+                    }
+                );
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro desconhecido");
+                const textoGerado = response.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!textoGerado) {
+                    throw new Error("A IA não retornou um texto válido.");
                 }
 
-                const textoGerado = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if (!textoGerado) throw new Error("A IA não retornou um texto válido.");
-
+                // Usar Marked.js para converter o Markdown em HTML puro
                 document.getElementById('resultado-markdown').innerHTML = marked.parse(textoGerado);
+                
                 mostrarEstado('conteudo-resultado');
                 document.getElementById('btn-pdf').classList.remove('hidden');
 
             } catch (error) {
                 console.error("Erro na integração:", error);
-                document.getElementById('mensagem-erro').innerText = error.message || "Erro ao conectar com a IA.";
+                document.getElementById('mensagem-erro').innerText = "Erro ao analisar com o Gemini. Verifique a conexão ou tente novamente mais tarde.";
                 mostrarEstado('estado-erro');
             } finally {
                 btnSubmit.disabled = false;
@@ -382,23 +375,26 @@ Gere o relatório e a lista de pedidos.`;
             }
         });
 
+        // Função para gerar e baixar o PDF
         function gerarPDF() {
-            const elemento = document.getElementById('documento-pdf-container');
+            const elementoParaPDF = document.getElementById('documento-pdf-container');
             const nomeCliente = document.getElementById('nome').value || 'Cliente';
             
+            // Configurações do html2pdf
             const opt = {
-                margin: 15,
-                filename: `Analise_Trabalhista_${nomeCliente.replace(/\s+/g, '_')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin:       15,
+                filename:     `Analise_Trabalhista_${nomeCliente.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            const clone = elemento.cloneNode(true);
-            clone.style.padding = '20px';
-            clone.style.backgroundColor = 'white';
+            // Estilização temporária apenas para a geração do PDF
+            const elementoClonado = elementoParaPDF.cloneNode(true);
+            elementoClonado.style.padding = '20px';
+            elementoClonado.style.backgroundColor = 'white';
             
-            html2pdf().set(opt).from(clone).save();
+            html2pdf().set(opt).from(elementoClonado).save();
         }
     </script>
 </body>
