@@ -49,6 +49,10 @@
                 </h1>
                 <p class="text-gray-500 mt-1">Assistente com IA para análise de casos e elaboração de pedidos.</p>
             </div>
+            
+            <button onclick="document.getElementById('modal-config').classList.remove('hidden')" class="p-2 text-gray-400 hover:text-blue-600 bg-white rounded-full shadow-sm border border-gray-200 transition mt-4 sm:mt-0" title="Configurar API">
+                <i class="ph ph-gear text-2xl"></i>
+            </button>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -215,16 +219,17 @@
                 </div>
 
                 <!-- Estado Erro -->
-                <div id="estado-erro" class="hidden flex-1 flex flex-col items-center justify-center py-12 text-red-500">
+                <div id="estado-erro" class="hidden flex-1 flex flex-col items-center justify-center py-12 text-red-500 w-full">
                     <i class="ph ph-warning-circle text-5xl mb-3"></i>
-                    <p class="text-center font-medium" id="mensagem-erro">Ocorreu um erro ao comunicar com a IA.</p>
-                    <button onclick="esconderErro()" class="mt-4 text-sm underline">Tentar novamente</button>
+                    <p class="text-center font-medium text-sm w-full break-words max-h-48 overflow-y-auto px-2 border border-red-100 bg-red-50 p-3 rounded" id="mensagem-erro">Erro ao comunicar.</p>
+                    <button onclick="esconderErro()" class="mt-4 text-sm underline font-bold">Voltar</button>
                 </div>
 
                 <!-- Resultado -->
                 <div id="conteudo-resultado" class="hidden flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     <!-- O contéudo será injetado aqui pelo marked.js para formatação e pelo html2pdf -->
-                    <div id="documento-pdf-container" class="p-2">
+                    <div id="documento-pdf-container" class="p-2 relative">
+                        <div id="aviso-modelo" class="text-xs text-gray-400 mb-2 border-b border-gray-100 pb-1 italic"></div>
                         <div id="resultado-markdown" class="text-gray-800 text-sm"></div>
                     </div>
                 </div>
@@ -233,11 +238,43 @@
         </div>
     </div>
 
+    <!-- Modal de Configuração -->
+    <div id="modal-config" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="ph ph-lock-key text-blue-600"></i> Configuração da API
+            </h3>
+            <p class="text-sm text-gray-500 mb-4">Configure sua chave ou teste se ela está funcionando corretamente e quais modelos do Gemini ela tem acesso na sua VPS.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Sistema</label>
+                    <input type="password" id="config-password" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none" placeholder="Sua senha secreta">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave API (Gemini)</label>
+                    <input type="password" id="config-apikey" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none" placeholder="AIzaSy...">
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-wrap justify-between gap-3">
+                <button type="button" onclick="testarAPI()" id="btn-test-api" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition flex items-center gap-2 order-1 w-full sm:w-auto justify-center">
+                    <i class="ph ph-plugs"></i> Testar Conexão / Modelos
+                </button>
+                
+                <div class="flex gap-3 order-2 w-full sm:w-auto justify-end">
+                    <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition">Cancelar</button>
+                    <button onclick="salvarConfiguracao()" id="btn-save-config" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition flex items-center gap-2">
+                        <i class="ph ph-floppy-disk"></i> Salvar na VPS
+                    </button>
+                </div>
+            </div>
+            
+            <div id="config-msg" class="hidden mt-4"></div>
+        </div>
+    </div>
+
     <script>
-        // API Key fornecida pelo ambiente dinamicamente. Não alterar.
-        const apiKey = "";
-        
-        // Exibir/Esconder campo de quantidade de férias
         function toggleFeriasInput() {
             const select = document.getElementById('ferias_vencidas');
             const divQuantas = document.getElementById('div_quantas_ferias');
@@ -246,24 +283,6 @@
             } else {
                 divQuantas.classList.add('hidden');
                 document.getElementById('quantas_ferias').value = '';
-            }
-        }
-
-        // Sistema de retry exponencial para chamadas à API
-        async function fetchWithRetry(url, options, retries = 5) {
-            const delays = [1000, 2000, 4000, 8000, 16000];
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        throw new Error(`Erro na API (Status ${response.status})`);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    if (i === retries - 1) throw error;
-                    console.log(`Tentativa ${i + 1} falhou, tentando novamente...`);
-                    await new Promise(resolve => setTimeout(resolve, delays[i]));
-                }
             }
         }
 
@@ -276,6 +295,83 @@
 
         function esconderErro() {
             mostrarEstado('estado-vazio');
+        }
+
+        async function testarAPI() {
+            const apiKey = document.getElementById('config-apikey').value;
+            const msgEl = document.getElementById('config-msg');
+            const btn = document.getElementById('btn-test-api');
+            
+            btn.innerHTML = 'Testando...';
+            btn.disabled = true;
+            msgEl.classList.remove('hidden');
+            msgEl.className = 'mt-4 text-sm text-center text-blue-600';
+            msgEl.innerText = 'Consultando o Google a partir da VPS...';
+
+            try {
+                const res = await fetch('/api/test-models', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey: apiKey }) 
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    msgEl.className = 'mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md text-xs font-mono text-gray-700 h-32 overflow-y-auto custom-scrollbar text-left';
+                    msgEl.innerHTML = '<strong class="text-green-600 mb-2 block">✓ Conexão bem-sucedida! Modelos liberados:</strong>' + data.models.join('<br>• ');
+                } else {
+                    msgEl.className = 'mt-4 text-sm p-3 bg-red-50 border border-red-200 text-red-600 font-medium rounded-md break-words text-left';
+                    msgEl.innerText = 'Falha: ' + data.message;
+                }
+            } catch (error) {
+                msgEl.className = 'mt-4 text-sm text-center text-red-600 font-medium';
+                msgEl.innerText = 'Erro ao conectar com o seu servidor Node.js. O backend está rodando no Coolify?';
+            } finally {
+                btn.innerHTML = '<i class="ph ph-plugs"></i> Testar Conexão / Modelos';
+                btn.disabled = false;
+            }
+        }
+
+        async function salvarConfiguracao() {
+            const password = document.getElementById('config-password').value;
+            const apiKey = document.getElementById('config-apikey').value;
+            const msgEl = document.getElementById('config-msg');
+            const btn = document.getElementById('btn-save-config');
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Salvando...';
+            msgEl.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, apiKey })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    msgEl.className = 'mt-4 text-sm text-center p-2 bg-green-50 text-green-700 rounded';
+                    msgEl.innerText = data.message;
+                    setTimeout(() => {
+                        document.getElementById('modal-config').classList.add('hidden');
+                        msgEl.classList.add('hidden');
+                        document.getElementById('config-password').value = '';
+                        document.getElementById('config-apikey').value = '';
+                    }, 2000);
+                } else {
+                    msgEl.className = 'mt-4 text-sm text-center p-2 bg-red-50 text-red-700 rounded';
+                    msgEl.innerText = data.message;
+                }
+            } catch (error) {
+                msgEl.className = 'mt-4 text-sm text-center p-2 bg-red-50 text-red-700 rounded';
+                msgEl.innerText = 'Erro ao conectar com a VPS para salvar a chave.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar na VPS';
+            }
         }
 
         // Listener do Formulário
@@ -334,29 +430,27 @@ Regras de Formatação:
 Por favor, gere o relatório de análise e a lista de pedidos trabalhistas com base nesses fatos.`;
 
             try {
-                // Chamada à API usando o modelo correto conforme instruções do Canvas
-                const response = await fetchWithRetry(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [{ text: userPrompt }]
-                            }],
-                            systemInstruction: {
-                                parts: [{ text: systemPrompt }]
-                            }
-                        })
-                    }
-                );
+                // Comunicação segura com o seu Node.js na VPS (não mais direto para o Google)
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userPrompt, systemPrompt })
+                });
 
-                const textoGerado = response.candidates?.[0]?.content?.parts?.[0]?.text;
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || "Erro desconhecido retornado pelo servidor.");
+                }
+
+                const textoGerado = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if (!textoGerado) {
-                    throw new Error("A IA não retornou um texto válido.");
+                    throw new Error("A IA não retornou um texto válido. A resposta da API pode estar vazia ou o modelo falhou na sua conta.");
+                }
+
+                if (data.usedModel) {
+                    document.getElementById('aviso-modelo').innerText = `Analisado pelo modelo: ${data.usedModel.replace('models/', '')}`;
                 }
 
                 // Usar Marked.js para converter o Markdown em HTML puro
@@ -367,7 +461,7 @@ Por favor, gere o relatório de análise e a lista de pedidos trabalhistas com b
 
             } catch (error) {
                 console.error("Erro na integração:", error);
-                document.getElementById('mensagem-erro').innerText = "Erro ao analisar com o Gemini. Verifique a conexão ou tente novamente mais tarde.";
+                document.getElementById('mensagem-erro').innerText = error.message;
                 mostrarEstado('estado-erro');
             } finally {
                 btnSubmit.disabled = false;
@@ -393,6 +487,8 @@ Por favor, gere o relatório de análise e a lista de pedidos trabalhistas com b
             const elementoClonado = elementoParaPDF.cloneNode(true);
             elementoClonado.style.padding = '20px';
             elementoClonado.style.backgroundColor = 'white';
+            const aviso = elementoClonado.querySelector('#aviso-modelo');
+            if (aviso) aviso.remove();
             
             html2pdf().set(opt).from(elementoClonado).save();
         }
