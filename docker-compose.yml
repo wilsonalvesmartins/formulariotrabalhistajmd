@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Isto diz à VPS para criar um "disco rígido persistente" 
+      # e vinculá-lo à pasta onde as entrevistas são guardadas.
+      - entrevistas_data:/usr/src/app/interviews
+
+volumes:
+  entrevistas_data:
