@@ -241,7 +241,8 @@
     </div>
 
     <!-- PAINEL RESTRITO (Tela Cheia) -->
-    <div id="painel-restrito" class="hidden fixed inset-0 bg-gray-100 z-50 flex flex-col h-screen overflow-hidden">
+    <!-- Adicionado min-h-0 para garantir a consistência do scroll no tailwind -->
+    <div id="painel-restrito" class="hidden fixed inset-0 bg-gray-100 z-50 flex flex-col h-screen overflow-hidden min-h-0">
         <!-- Header Admin -->
         <header class="bg-white border-b border-gray-200 p-4 shadow-sm flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
@@ -264,22 +265,23 @@
         </header>
 
         <!-- Corpo Admin -->
-        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <!-- O erro de scroll nas áreas de flexbox foi corrigido com 'min-h-0' nas tags principais -->
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
             <!-- Sidebar: Lista de Entrevistas -->
-            <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 flex flex-col h-1/3 md:h-full">
+            <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 flex flex-col h-1/3 md:h-full min-h-0">
                 <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Caixa de Entrada</h3>
                     <button onclick="carregarListaAdmin()" class="text-blue-600 hover:text-blue-800" title="Atualizar lista">
                         <i class="ph ph-arrows-clockwise text-lg"></i>
                     </button>
                 </div>
-                <div id="admin-lista" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                <div id="admin-lista" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar min-h-0">
                     <div class="text-center py-8 text-gray-400 text-sm">Carregando...</div>
                 </div>
             </div>
 
             <!-- Área Principal: Detalhes e IA -->
-            <div class="w-full md:w-2/3 lg:w-3/4 bg-gray-50 flex flex-col h-2/3 md:h-full relative">
+            <div class="w-full md:w-2/3 lg:w-3/4 bg-gray-50 flex flex-col h-2/3 md:h-full relative min-h-0">
                 
                 <!-- Tela Vazia -->
                 <div id="admin-vazio" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-10 bg-gray-50">
@@ -288,7 +290,7 @@
                 </div>
 
                 <!-- Conteúdo do Caso Selecionado -->
-                <div id="admin-conteudo" class="hidden flex-col h-full z-20">
+                <div id="admin-conteudo" class="hidden flex-col h-full z-20 min-h-0">
                     <!-- Toolbar Superior -->
                     <div class="bg-white p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 shadow-sm z-10">
                         <div>
@@ -307,8 +309,8 @@
                         </div>
                     </div>
 
-                    <!-- Corpo de Visualização (Dividido em 2 abas/áreas no PC) -->
-                    <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+                    <!-- Corpo de Visualização: Scroll aplicado aqui (min-h-0) -->
+                    <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar min-h-0">
                         
                         <!-- Dados Originais do Cliente (Sempre visível) -->
                         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
@@ -340,7 +342,7 @@
                             
                             <div id="admin-ia-erro" class="hidden py-6 text-red-500 text-center text-sm font-medium bg-red-50 rounded-lg p-4"></div>
 
-                            <!-- Onde o PDF captura -->
+                            <!-- Onde o PDF captura visualmente -->
                             <div id="documento-pdf-container" class="hidden">
                                 <div id="resultado-markdown" class="text-gray-800 text-sm"></div>
                             </div>
@@ -442,7 +444,6 @@
             };
 
             try {
-                // Envia apenas os dados puros para a VPS salvar
                 const response = await fetch('/api/interviews', {
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
@@ -491,7 +492,6 @@
             btn.disabled = true;
 
             try {
-                // Tenta buscar a lista. Se retornar 401, a senha está errada.
                 const res = await fetch('/api/interviews', {
                     headers: { 'x-auth-password': senhaTentativa }
                 });
@@ -503,11 +503,8 @@
 
                 if (!res.ok) throw new Error("Erro no servidor.");
 
-                // Sucesso!
                 senhaAdminAtiva = senhaTentativa;
                 document.getElementById('modal-senha-restrito').classList.add('hidden');
-                
-                // Preenche a configuração automaticamente com a senha logada para facilitar
                 document.getElementById('config-password').value = senhaAdminAtiva;
                 
                 abrirPainelRestrito();
@@ -590,7 +587,7 @@
             document.getElementById('admin-vazio').classList.add('hidden');
             const cont = document.getElementById('admin-conteudo');
             cont.classList.remove('hidden');
-            cont.style.opacity = '0.5'; // Estado de carregamento visual
+            cont.style.opacity = '0.5';
 
             try {
                 const res = await fetch(`/api/interviews/${id}`, {
@@ -639,7 +636,7 @@
         }
 
         // ==========================================
-        // GERAÇÃO DE ANÁLISE PELA IA (ADMIN)
+        // GERAÇÃO DE ANÁLISE PELA IA E PDF ROBUSTO
         // ==========================================
         function resetarAreaIA() {
             document.getElementById('admin-ia-vazio').classList.remove('hidden');
@@ -695,7 +692,7 @@
                 }
 
                 exibirAnalisePronta(data.markdown, data.usedModel);
-                carregarListaAdmin(); // Atualiza o status na barra lateral para "IA (Verde)"
+                carregarListaAdmin();
 
             } catch (error) {
                 const elErro = document.getElementById('admin-ia-erro');
@@ -707,22 +704,59 @@
             }
         }
 
+        // Nova função super robusta para gerar PDF garantindo 100% de visibilidade
         function gerarPDFAdmin() {
-            const elementoParaPDF = document.getElementById('documento-pdf-container');
             const nomeFormatado = casoSelecionadoNome.replace(/\s+/g, '_');
+            const markdownHTML = document.getElementById('resultado-markdown').innerHTML;
+            const dadosCrusHTML = document.getElementById('admin-dados-crus').innerHTML;
+
+            // Cria um container totalmente novo e visível no fundo da página apenas para o PDF
+            const pdfContainer = document.createElement('div');
+            pdfContainer.style.width = '800px'; 
+            pdfContainer.style.padding = '40px';
+            pdfContainer.style.backgroundColor = '#ffffff';
+            pdfContainer.style.color = '#1f2937'; // text-gray-800
+            pdfContainer.style.fontFamily = 'ui-sans-serif, system-ui, sans-serif';
+            pdfContainer.style.position = 'absolute';
+            pdfContainer.style.top = '0';
+            pdfContainer.style.left = '0';
+            pdfContainer.style.zIndex = '-9999'; // Fica atrás de tudo (invisível pro usuário, mas visível pra biblioteca)
+
+            pdfContainer.innerHTML = `
+                <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 20px;">
+                    <h1 style="font-size: 24px; font-weight: bold; color: #1e3a8a; margin: 0;">Análise Trabalhista</h1>
+                    <p style="color: #6b7280; margin-top: 5px; font-size: 14px;">Cliente: <strong>${casoSelecionadoNome}</strong></p>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">1. Formulário Preenchido</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
+                        ${dadosCrusHTML}
+                    </div>
+                </div>
+
+                <div>
+                    <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">2. Parecer da IA</h2>
+                    <div id="pdf-markdown-content" style="font-size: 13px; line-height: 1.6;">
+                        ${markdownHTML}
+                    </div>
+                </div>
+            `;
+
+            // Copia os estilos do markdown para o elemento temporário
+            const style = document.createElement('style');
+            style.innerHTML = `
+                #pdf-markdown-content h1 { font-size: 1.5rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1e3a8a; }
+                #pdf-markdown-content h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #2563eb; }
+                #pdf-markdown-content h3 { font-size: 1.125rem; font-weight: bold; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+                #pdf-markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
+                #pdf-markdown-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+                #pdf-markdown-content li { margin-bottom: 0.25rem; }
+                #pdf-markdown-content strong { font-weight: 600; }
+            `;
+            pdfContainer.appendChild(style);
             
-            const clone = elementoParaPDF.cloneNode(true);
-            clone.classList.remove('hidden'); // O container original está hidden no fluxo normal da UI
-            clone.style.position = 'absolute';
-            clone.style.top = '-9999px';
-            clone.style.left = '0';
-            clone.style.width = '800px'; 
-            clone.style.backgroundColor = 'white';
-            clone.style.padding = '30px';
-            clone.style.height = 'auto';
-            clone.style.overflow = 'visible';
-            
-            document.body.appendChild(clone);
+            document.body.appendChild(pdfContainer);
             
             const opt = {
                 margin:       15,
@@ -732,8 +766,9 @@
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(clone).save().then(() => {
-                document.body.removeChild(clone); 
+            // Gera o PDF e logo em seguida apaga o elemento invisível
+            html2pdf().set(opt).from(pdfContainer).save().then(() => {
+                document.body.removeChild(pdfContainer); 
             });
         }
 
@@ -794,7 +829,6 @@
                     setTimeout(() => {
                         document.getElementById('modal-config').classList.add('hidden');
                         msgEl.classList.add('hidden');
-                        // Limpa a chave visualmente por segurança, mantemos a senha pois já está logado
                         document.getElementById('config-apikey').value = '';
                     }, 2000);
                 } else {
