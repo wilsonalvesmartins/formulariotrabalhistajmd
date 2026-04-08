@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
-const crypto = require('crypto'); // Necessário para gerar IDs únicos para os relatórios
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -13,11 +13,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Arquivos e pastas do sistema na VPS
 const CONFIG_FILE = path.join(__dirname, 'config.json');
-const REPORTS_DIR = path.join(__dirname, 'reports');
+const INTERVIEWS_DIR = path.join(__dirname, 'interviews');
 
-// Garante que a pasta de relatórios exista na VPS
-if (!fs.existsSync(REPORTS_DIR)) {
-    fs.mkdirSync(REPORTS_DIR, { recursive: true });
+// Garante que a pasta de entrevistas exista na VPS
+if (!fs.existsSync(INTERVIEWS_DIR)) {
+    fs.mkdirSync(INTERVIEWS_DIR, { recursive: true });
+}
+
+// Senha da área restrita
+const SENHA_RESTRITA = '36672456';
+
+// Middleware para proteger rotas da área restrita
+function protegerRestrito(req, res, next) {
+    const senhaFornecida = req.headers['x-auth-password'];
+    if (senhaFornecida === SENHA_RESTRITA) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Senha incorreta. Acesso negado.' });
+    }
 }
 
 // Função auxiliar para recuperar a chave salva
@@ -33,221 +46,95 @@ function getApiKey() {
     return process.env.GEMINI_API_KEY || null;
 }
 
-// Rota para salvar a Chave de API
-app.post('/api/config', (req, res) => {
-    const { password, apiKey } = req.body;
-    
-    if (password === '93281434@Neto*') {
-        if (!apiKey) {
-            return res.status(400).json({ success: false, message: 'A chave de API não pode ser vazia.' });
-        }
-        fs.writeFileSync(CONFIG_FILE, JSON.stringify({ apiKey }), 'utf8');
-        res.json({ success: true, message: 'Chave salva com sucesso na VPS!' });
-    } else {
-        res.status(401).json({ success: false, message: 'Senha incorreta. Acesso negado.' });
-    }
-});
-
-// Rota: Testar chave e LISTAR MODELOS DISPONÍVEIS
-app.post('/api/test-models', async (req, res) => {
-    const apiKey = req.body.apiKey || getApiKey();
-    
-    if (!apiKey) {
-        return res.status(400).json({ success: false, message: 'Forneça uma chave de API para testar.' });
-    }
-
-    try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        const text = await response.text();
-        
-        if (!response.ok) {
-            return res.status(response.status).json({ success: false, message: `Erro Google: ${text}` });
-        }
-        
-        const data = JSON.parse(text);
-        
-        // Filtra só os que servem pra chat/texto
-        const modelNames = data.models
-            .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-            .map(m => m.name);
-            
-        res.json({ success: true, models: modelNames });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Rota que processa a análise (SELEÇÃO INTELIGENTE DE MODELO)
-app.post('/api/analyze', async (req, res) => {
-    const apiKey = getApiKey();
-    
-    if (!apiKey) {
-        return res.status(401).json({ error: 'Chave de API não configurada no servidor. Cadastre-a na engrenagem.' });
-    }
-
-    const { userPrompt, systemPrompt } = req.body;
-
-    try {
-        // 1. O BACKEND BATE NO GOOGLE E PEDE A LISTA DOS MODELOS DA SUA CHAVE
-        const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        const modelsText = await modelsRes.text();
-        
-        if (!modelsRes.ok) {
-            return res.status(modelsRes.status).json({ error: `Falha ao validar chave com o Google: ${modelsText}` });
-        }
-        
-        const modelsData = JSON.parse(modelsText);
-        const validModels = modelsData.models.filter(m => 
-            m.name.includes('gemini') && 
-            m.supportedGenerationMethods && 
-            m.supportedGenerationMethods.includes('generateContent')
-        );
-
-        if (validModels.length === 0) {
-            return res.status(400).json({ error: 'Sua chave de API não possui acesso a nenhum modelo Gemini compatível.' });
-        }
-
-        // 2. BUSCA O MELHOR MODELO
-        const preferences = ['gemini-3.1-flash', 'gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
-        let selectedModelId = validModels[0].name; 
-        
-        for (const pref of preferences) {
-            const found = validModels.find(m => m.name.includes(pref));
-            if (found) {
-                selectedModelId = found.name;
-                break; 
-            }
-        }
-
-        console.log(`Modelo escolhido pelo servidor para a requisição: ${selectedModelId}`);
-
-        // 3. ENVIA OS DADOS DA ENTREVISTA EXATAMENTE PARA O MODELO QUE ELE ENCONTROU
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${selectedModelId}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: userPrompt }]
-                }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                }
-            })
-        });
-
-        const respText = await response.text();
-
-        if (!response.ok) {
-            return res.status(response.status).json({ error: `Erro retornado pelo modelo ${selectedModelId}: ${respText}` });
-        }
-
-        const data = JSON.parse(respText);
-        data.usedModel = selectedModelId; 
-        res.json(data);
-        
-    } catch (error) {
-        console.error('Detalhes do erro na API:', error);
-        res.status(500).json({ error: `Erro interno no servidor VPS (Node): ${error.message}` });
-    }
-});
-
 // ==========================================
-// ROTAS DE HISTÓRICO DE RELATÓRIOS
+// ROTAS PÚBLICAS (Visão do Cliente)
 // ==========================================
 
-const SENHA_HISTORICO = '36672456';
-
-// Middleware para proteger rotas de leitura/exclusão do histórico
-function protegerHistorico(req, res, next) {
-    const senhaFornecida = req.headers['x-auth-password'];
-    if (senhaFornecida === SENHA_HISTORICO) {
-        next();
-    } else {
-        res.status(401).json({ error: 'Senha incorreta. Acesso negado.' });
-    }
-}
-
-// Salvar um novo relatório
-app.post('/api/reports', (req, res) => {
+// Cliente envia o formulário (Salva os dados crus, sem chamar a IA)
+app.post('/api/interviews', (req, res) => {
     try {
-        const { nome_cliente, markdown, usedModel } = req.body;
+        const dadosEntrevista = req.body;
         
-        if (!nome_cliente || !markdown) {
-            return res.status(400).json({ error: 'Dados insuficientes para salvar.' });
+        if (!dadosEntrevista.nome) {
+            return res.status(400).json({ error: 'O nome é obrigatório.' });
         }
 
         const id = crypto.randomUUID();
         const data_criacao = new Date().toISOString();
         
-        const reportData = {
+        const registro = {
             id,
             data_criacao,
-            nome_cliente,
-            markdown,
-            usedModel
+            status: 'pendente', // pendente ou analisado
+            dados: dadosEntrevista,
+            analise_markdown: null,
+            usedModel: null
         };
 
-        const filePath = path.join(REPORTS_DIR, `${id}.json`);
-        fs.writeFileSync(filePath, JSON.stringify(reportData, null, 2), 'utf8');
+        const filePath = path.join(INTERVIEWS_DIR, `${id}.json`);
+        fs.writeFileSync(filePath, JSON.stringify(registro, null, 2), 'utf8');
 
-        res.json({ success: true, id });
+        res.json({ success: true, id, message: 'Dados enviados com sucesso!' });
     } catch (error) {
-        console.error('Erro ao salvar relatório:', error);
-        res.status(500).json({ error: 'Erro ao salvar relatório na VPS.' });
+        console.error('Erro ao salvar entrevista:', error);
+        res.status(500).json({ error: 'Erro ao enviar dados para o servidor.' });
     }
 });
 
-// Listar todos os relatórios
-app.get('/api/reports', protegerHistorico, (req, res) => {
+
+// ==========================================
+// ROTAS RESTRITAS (Visão do Administrador)
+// ==========================================
+
+// Listar todas as entrevistas
+app.get('/api/interviews', protegerRestrito, (req, res) => {
     try {
-        const files = fs.readdirSync(REPORTS_DIR).filter(file => file.endsWith('.json'));
+        const files = fs.readdirSync(INTERVIEWS_DIR).filter(file => file.endsWith('.json'));
         
-        const reports = files.map(file => {
-            const filePath = path.join(REPORTS_DIR, file);
+        const entrevistas = files.map(file => {
+            const filePath = path.join(INTERVIEWS_DIR, file);
             const fileData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
             return {
                 id: fileData.id,
                 data_criacao: fileData.data_criacao,
-                nome_cliente: fileData.nome_cliente,
+                nome_cliente: fileData.dados.nome,
+                status: fileData.status,
                 usedModel: fileData.usedModel
             };
         });
 
-        // Ordenar do mais recente para o mais antigo
-        reports.sort((a, b) => new Date(b.data_criacao) - new Date(a.data_criacao));
+        // Ordenar da mais recente para a mais antiga
+        entrevistas.sort((a, b) => new Date(b.data_criacao) - new Date(a.data_criacao));
 
-        res.json({ success: true, reports });
+        res.json({ success: true, entrevistas });
     } catch (error) {
-        console.error('Erro ao listar relatórios:', error);
-        res.status(500).json({ error: 'Erro ao listar relatórios da VPS.' });
+        console.error('Erro ao listar entrevistas:', error);
+        res.status(500).json({ error: 'Erro ao listar dados do servidor.' });
     }
 });
 
-// Buscar um relatório específico
-app.get('/api/reports/:id', protegerHistorico, (req, res) => {
+// Buscar uma entrevista específica completa
+app.get('/api/interviews/:id', protegerRestrito, (req, res) => {
     try {
         const { id } = req.params;
-        const filePath = path.join(REPORTS_DIR, `${id}.json`);
+        const filePath = path.join(INTERVIEWS_DIR, `${id}.json`);
         
         if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'Relatório não encontrado.' });
+            return res.status(404).json({ error: 'Registro não encontrado.' });
         }
 
         const fileData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        res.json({ success: true, report: fileData });
+        res.json({ success: true, entrevista: fileData });
     } catch (error) {
-        console.error('Erro ao buscar relatório:', error);
-        res.status(500).json({ error: 'Erro ao buscar o relatório.' });
+        res.status(500).json({ error: 'Erro ao buscar o registro.' });
     }
 });
 
-// Excluir um relatório
-app.delete('/api/reports/:id', protegerHistorico, (req, res) => {
+// Excluir uma entrevista
+app.delete('/api/interviews/:id', protegerRestrito, (req, res) => {
     try {
         const { id } = req.params;
-        const filePath = path.join(REPORTS_DIR, `${id}.json`);
+        const filePath = path.join(INTERVIEWS_DIR, `${id}.json`);
         
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
@@ -255,8 +142,126 @@ app.delete('/api/reports/:id', protegerHistorico, (req, res) => {
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Erro ao excluir relatório:', error);
-        res.status(500).json({ error: 'Erro ao excluir o relatório.' });
+        res.status(500).json({ error: 'Erro ao excluir o registro.' });
+    }
+});
+
+// Rota que processa a análise com IA e salva no registro
+app.post('/api/interviews/:id/analyze', protegerRestrito, async (req, res) => {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        return res.status(401).json({ error: 'Chave de API não configurada no servidor. Acesse as configurações.' });
+    }
+
+    const { id } = req.params;
+    const filePath = path.join(INTERVIEWS_DIR, `${id}.json`);
+    
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Registro não encontrado.' });
+    }
+
+    const registro = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const dados = registro.dados;
+
+    const systemPrompt = `Você é um Assistente Jurídico especializado em Direito do Trabalho Brasileiro (CLT). Analise os dados da entrevista, gere um resumo profissional do caso e liste os principais pedidos para Reclamação Trabalhista. Responda EXCLUSIVAMENTE em formato Markdown. Não crie a petição inicial.`;
+
+    const userPrompt = `Análise do Cliente:
+- Nome: ${dados.nome}
+- Período: de ${dados.data_entrada} até ${dados.data_saida}
+- Último Salário: R$ ${dados.salario}
+- CTPS Assinada: ${dados.ctps}
+- Ambiente Insalubre/Perigoso: ${dados.insalubridade_periculosidade}
+- Recebimento do Adicional: ${dados.recebia_adicional}
+- Horário de Trabalho e Escala: ${dados.horario_trabalho}
+- Férias Vencidas: ${dados.ferias_vencidas} (Quant: ${dados.quantas_ferias})
+- 13º Salário: ${dados.decimo_terceiro}
+- FGTS: ${dados.fgts}
+- CCT: ${dados.cct}
+- Extras: ${dados.detalhes_extras}
+
+Gere o relatório e a lista de pedidos.`;
+
+    try {
+        // 1. Busca os modelos disponíveis
+        const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!modelsRes.ok) throw new Error(`Falha ao validar chave com o Google.`);
+        
+        const modelsData = await modelsRes.json();
+        const validModels = modelsData.models.filter(m => m.name.includes('gemini') && m.supportedGenerationMethods?.includes('generateContent'));
+
+        if (validModels.length === 0) throw new Error('Sua chave de API não possui acesso a modelos Gemini.');
+
+        // 2. Seleciona o melhor modelo
+        const preferences = ['gemini-3.1-flash', 'gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'];
+        let selectedModelId = validModels[0].name; 
+        
+        for (const pref of preferences) {
+            if (validModels.find(m => m.name.includes(pref))) {
+                selectedModelId = validModels.find(m => m.name.includes(pref)).name;
+                break; 
+            }
+        }
+
+        // 3. Chama a IA
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${selectedModelId}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } })
+        });
+
+        const respText = await response.text();
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: `Erro da IA (${selectedModelId}): ${respText}` });
+        }
+
+        const data = JSON.parse(respText);
+        const textoMarkdown = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textoMarkdown) throw new Error("A IA retornou uma resposta vazia.");
+
+        // 4. Atualiza e salva o registro
+        registro.status = 'analisado';
+        registro.analise_markdown = textoMarkdown;
+        registro.usedModel = selectedModelId;
+        
+        fs.writeFileSync(filePath, JSON.stringify(registro, null, 2), 'utf8');
+
+        res.json({ success: true, markdown: textoMarkdown, usedModel: selectedModelId });
+        
+    } catch (error) {
+        console.error('Erro na IA:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// ==========================================
+// CONFIGURAÇÕES DA API (Admin)
+// ==========================================
+app.post('/api/config', (req, res) => {
+    const { password, apiKey } = req.body;
+    if (password === SENHA_RESTRITA) {
+        if (!apiKey) return res.status(400).json({ success: false, message: 'Chave vazia.' });
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify({ apiKey }), 'utf8');
+        res.json({ success: true, message: 'Chave salva com sucesso na VPS!' });
+    } else {
+        res.status(401).json({ success: false, message: 'Senha incorreta.' });
+    }
+});
+
+app.post('/api/test-models', async (req, res) => {
+    const apiKey = req.body.apiKey || getApiKey();
+    if (!apiKey) return res.status(400).json({ success: false, message: 'Forneça uma chave de API.' });
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const text = await response.text();
+        if (!response.ok) return res.status(response.status).json({ success: false, message: `Erro: ${text}` });
+        const data = JSON.parse(text);
+        const modelNames = data.models.filter(m => m.supportedGenerationMethods?.includes('generateContent')).map(m => m.name);
+        res.json({ success: true, models: modelNames });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
