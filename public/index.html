@@ -191,7 +191,7 @@
 
                 <div id="status-enviando" class="hidden flex flex-col items-center">
                     <div class="loader mb-4"></div>
-                    <p class="text-blue-600 font-medium">Enviando seus dados...</p>
+                    <p class="text-blue-600 font-medium">A enviar os seus dados...</p>
                 </div>
 
                 <div id="status-sucesso" class="hidden flex flex-col items-center w-full">
@@ -199,7 +199,7 @@
                         <i class="ph ph-check-circle text-5xl"></i>
                     </div>
                     <h2 class="text-xl font-bold text-gray-800 mb-2">Dados Enviados!</h2>
-                    <p class="text-gray-500 text-sm mb-6">Recebemos suas informações com sucesso. Nossa equipe jurídica fará a análise do seu caso.</p>
+                    <p class="text-gray-500 text-sm mb-6">Recebemos as suas informações com sucesso. Nossa equipa jurídica fará a análise do seu caso.</p>
                     <button onclick="resetarFormulario()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium">
                         Enviar outro caso
                     </button>
@@ -241,8 +241,8 @@
     </div>
 
     <!-- PAINEL RESTRITO (Tela Cheia) -->
-    <!-- Adicionado min-h-0 para garantir a consistência do scroll no tailwind -->
-    <div id="painel-restrito" class="hidden fixed inset-0 bg-gray-100 z-50 flex flex-col h-screen overflow-hidden min-h-0">
+    <!-- Correção de classes de altura para resolver problemas de scroll no telemóvel -->
+    <div id="painel-restrito" class="hidden fixed inset-0 bg-gray-100 z-50 flex flex-col h-screen h-[100dvh] overflow-hidden">
         <!-- Header Admin -->
         <header class="bg-white border-b border-gray-200 p-4 shadow-sm flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
@@ -265,36 +265,35 @@
         </header>
 
         <!-- Corpo Admin -->
-        <!-- O erro de scroll nas áreas de flexbox foi corrigido com 'min-h-0' nas tags principais -->
-        <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
             <!-- Sidebar: Lista de Entrevistas -->
-            <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 flex flex-col h-1/3 md:h-full min-h-0">
-                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 flex flex-col h-1/3 md:h-full shrink-0">
+                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
                     <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Caixa de Entrada</h3>
                     <button onclick="carregarListaAdmin()" class="text-blue-600 hover:text-blue-800" title="Atualizar lista">
                         <i class="ph ph-arrows-clockwise text-lg"></i>
                     </button>
                 </div>
-                <div id="admin-lista" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar min-h-0">
-                    <div class="text-center py-8 text-gray-400 text-sm">Carregando...</div>
+                <div id="admin-lista" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                    <div class="text-center py-8 text-gray-400 text-sm">A carregar...</div>
                 </div>
             </div>
 
             <!-- Área Principal: Detalhes e IA -->
-            <div class="w-full md:w-2/3 lg:w-3/4 bg-gray-50 flex flex-col h-2/3 md:h-full relative min-h-0">
+            <div class="w-full md:w-2/3 lg:w-3/4 bg-gray-50 flex flex-col h-2/3 md:h-full relative overflow-hidden">
                 
                 <!-- Tela Vazia -->
-                <div id="admin-vazio" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-10 bg-gray-50">
+                <div id="admin-vazio" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-30 bg-gray-50">
                     <i class="ph ph-folder-open text-6xl mb-4 text-gray-300"></i>
                     <p class="text-lg">Selecione um caso na lista para analisar.</p>
                 </div>
 
                 <!-- Conteúdo do Caso Selecionado -->
-                <div id="admin-conteudo" class="hidden flex-col h-full z-20 min-h-0">
+                <div id="admin-conteudo" class="hidden absolute inset-0 flex flex-col bg-gray-50 z-20">
                     <!-- Toolbar Superior -->
                     <div class="bg-white p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 shadow-sm z-10">
-                        <div>
-                            <h2 id="admin-cliente-nome" class="text-2xl font-bold text-gray-800">Nome do Cliente</h2>
+                        <div class="w-full sm:w-auto truncate">
+                            <h2 id="admin-cliente-nome" class="text-2xl font-bold text-gray-800 truncate">Nome do Cliente</h2>
                             <p id="admin-cliente-data" class="text-sm text-gray-500 flex items-center gap-1 mt-1">
                                 <i class="ph ph-calendar-blank"></i> Recebido em: --
                             </p>
@@ -309,21 +308,21 @@
                         </div>
                     </div>
 
-                    <!-- Corpo de Visualização: Scroll aplicado aqui (min-h-0) -->
-                    <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar min-h-0">
+                    <!-- Corpo de Visualização: Agora o scroll funciona sem conflitos flexbox em mobile -->
+                    <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar w-full relative">
                         
-                        <!-- Dados Originais do Cliente (Sempre visível) -->
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+                        <!-- Dados Originais do Cliente -->
+                        <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
                             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
                                 <i class="ph ph-clipboard-text"></i> Formulário Preenchido
                             </h3>
-                            <div id="admin-dados-crus" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-700">
+                            <div id="admin-dados-crus" class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-700">
                                 <!-- Preenchido via JS -->
                             </div>
                         </div>
 
                         <!-- Área da IA -->
-                        <div id="admin-area-ia" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 min-h-[300px] relative">
+                        <div id="admin-area-ia" class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-gray-200 min-h-[300px] mb-8 relative">
                             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between border-b pb-2">
                                 <span class="flex items-center gap-2"><i class="ph ph-robot"></i> Parecer da IA</span>
                                 <span id="admin-modelo-usado" class="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded hidden"></span>
@@ -331,18 +330,17 @@
 
                             <div id="admin-ia-vazio" class="py-12 flex flex-col items-center justify-center text-gray-400">
                                 <i class="ph ph-magic-wand text-4xl mb-3"></i>
-                                <p>Análise de IA ainda não foi gerada para este caso.</p>
+                                <p class="text-center">A análise de IA ainda não foi gerada.</p>
                                 <p class="text-xs mt-1">Clique no botão azul acima para gerar.</p>
                             </div>
 
-                            <div id="admin-ia-carregando" class="hidden py-12 flex flex-col items-center justify-center">
+                            <div id="admin-ia-carregando" class="hidden py-12 flex flex-col items-center justify-center text-center">
                                 <div class="loader mb-4"></div>
-                                <p class="text-blue-600 font-medium">Conectando ao Gemini e analisando caso...</p>
+                                <p class="text-blue-600 font-medium">A conectar ao Gemini e analisar o caso...</p>
                             </div>
                             
                             <div id="admin-ia-erro" class="hidden py-6 text-red-500 text-center text-sm font-medium bg-red-50 rounded-lg p-4"></div>
 
-                            <!-- Onde o PDF captura visualmente -->
                             <div id="documento-pdf-container" class="hidden">
                                 <div id="resultado-markdown" class="text-gray-800 text-sm"></div>
                             </div>
@@ -373,10 +371,10 @@
             </div>
 
             <div class="mt-6 flex flex-wrap justify-between gap-3">
-                <button type="button" onclick="testarAPI()" id="btn-test-api" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition flex items-center gap-2">
+                <button type="button" onclick="testarAPI()" id="btn-test-api" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition flex items-center gap-2 w-full sm:w-auto justify-center">
                     <i class="ph ph-plugs"></i> Testar Conexão
                 </button>
-                <div class="flex gap-3">
+                <div class="flex gap-3 w-full sm:w-auto justify-end">
                     <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition">Cancelar</button>
                     <button onclick="salvarConfiguracao()" id="btn-save-config" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition">
                         Salvar
@@ -532,7 +530,7 @@
 
         async function carregarListaAdmin() {
             const lista = document.getElementById('admin-lista');
-            lista.innerHTML = '<div class="text-center py-6 text-gray-400"><div class="loader mx-auto mb-2 border-gray-300 border-t-blue-500"></div>Buscando...</div>';
+            lista.innerHTML = '<div class="text-center py-6 text-gray-400"><div class="loader mx-auto mb-2 border-gray-300 border-t-blue-500"></div>A buscar...</div>';
 
             try {
                 const res = await fetch('/api/interviews', {
@@ -582,7 +580,7 @@
 
         async function carregarCaso(id) {
             casoSelecionadoId = id;
-            carregarListaAdmin(); // Re-renderiza a lista para atualizar o item ativo
+            carregarListaAdmin();
 
             document.getElementById('admin-vazio').classList.add('hidden');
             const cont = document.getElementById('admin-conteudo');
@@ -600,28 +598,25 @@
                 const caso = data.entrevista;
                 casoSelecionadoNome = caso.dados.nome;
 
-                // Preencher Header
                 document.getElementById('admin-cliente-nome').innerText = caso.dados.nome;
                 const d = new Date(caso.data_criacao);
                 document.getElementById('admin-cliente-data').innerHTML = `<i class="ph ph-calendar-blank"></i> Recebido em: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
 
-                // Preencher Dados Crus
                 const gridDados = document.getElementById('admin-dados-crus');
                 gridDados.innerHTML = `
                     <div><span class="text-gray-400 block text-xs">Período</span> <strong class="text-gray-800">${caso.dados.data_entrada} até ${caso.dados.data_saida}</strong></div>
                     <div><span class="text-gray-400 block text-xs">Salário Base</span> <strong class="text-gray-800">R$ ${caso.dados.salario}</strong></div>
                     <div><span class="text-gray-400 block text-xs">CTPS Assinada</span> <strong class="text-gray-800">${caso.dados.ctps}</strong></div>
                     <div><span class="text-gray-400 block text-xs">Insalubre/Perigoso</span> <strong class="text-gray-800">${caso.dados.insalubridade_periculosidade}</strong></div>
-                    <div class="md:col-span-2"><span class="text-gray-400 block text-xs">Jornada/Escala</span> <strong class="text-gray-800">${caso.dados.horario_trabalho}</strong></div>
+                    <div class="md:col-span-2 sm:col-span-2"><span class="text-gray-400 block text-xs">Jornada/Escala</span> <strong class="text-gray-800">${caso.dados.horario_trabalho}</strong></div>
                     <div><span class="text-gray-400 block text-xs">Adicional Recebido</span> <strong class="text-gray-800">${caso.dados.recebia_adicional}</strong></div>
                     <div><span class="text-gray-400 block text-xs">Férias Vencidas</span> <strong class="text-gray-800">${caso.dados.ferias_vencidas} (${caso.dados.quantas_ferias})</strong></div>
                     <div><span class="text-gray-400 block text-xs">13º Salário</span> <strong class="text-gray-800">${caso.dados.decimo_terceiro}</strong></div>
                     <div><span class="text-gray-400 block text-xs">FGTS</span> <strong class="text-gray-800">${caso.dados.fgts}</strong></div>
-                    <div class="md:col-span-2"><span class="text-gray-400 block text-xs">Convenção Coletiva (CCT)</span> <strong class="text-gray-800">${caso.dados.cct}</strong></div>
-                    <div class="md:col-span-2"><span class="text-gray-400 block text-xs">Observações do Cliente</span> <p class="text-gray-800 bg-gray-50 p-3 rounded mt-1 whitespace-pre-wrap">${caso.dados.detalhes_extras}</p></div>
+                    <div class="md:col-span-2 sm:col-span-2"><span class="text-gray-400 block text-xs">Convenção Coletiva (CCT)</span> <strong class="text-gray-800">${caso.dados.cct}</strong></div>
+                    <div class="md:col-span-2 sm:col-span-2"><span class="text-gray-400 block text-xs">Observações do Cliente</span> <p class="text-gray-800 bg-gray-50 p-3 rounded mt-1 whitespace-pre-wrap">${caso.dados.detalhes_extras}</p></div>
                 `;
 
-                // Configurar Área da IA
                 resetarAreaIA();
                 
                 if (caso.status === 'analisado' && caso.analise_markdown) {
@@ -636,7 +631,7 @@
         }
 
         // ==========================================
-        // GERAÇÃO DE ANÁLISE PELA IA E PDF ROBUSTO
+        // GERAÇÃO DE ANÁLISE E NOVO PDF ROBUSTO
         // ==========================================
         function resetarAreaIA() {
             document.getElementById('admin-ia-vazio').classList.remove('hidden');
@@ -704,72 +699,84 @@
             }
         }
 
-        // Nova função super robusta para gerar PDF garantindo 100% de visibilidade
+        // Função reescrita para forçar a renderização do ecrã e resolver PDF em branco
         function gerarPDFAdmin() {
             const nomeFormatado = casoSelecionadoNome.replace(/\s+/g, '_');
             const markdownHTML = document.getElementById('resultado-markdown').innerHTML;
             const dadosCrusHTML = document.getElementById('admin-dados-crus').innerHTML;
 
-            // Cria um container totalmente novo e visível no fundo da página apenas para o PDF
+            // Criar um ecrã de carregamento para esconder a "magia"
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'fixed inset-0 bg-gray-900 bg-opacity-90 z-[999999] flex flex-col items-center justify-center text-white';
+            loadingOverlay.innerHTML = '<div class="loader mb-4 border-t-white"></div><h2 class="text-2xl font-bold">A gerar PDF...</h2><p class="text-sm mt-2 text-gray-300">Não feche a página.</p>';
+            document.body.appendChild(loadingOverlay);
+
+            // Criar um div de renderização na raiz do Documento, absolutamente isolado do Flexbox
             const pdfContainer = document.createElement('div');
-            pdfContainer.style.width = '800px'; 
-            pdfContainer.style.padding = '40px';
-            pdfContainer.style.backgroundColor = '#ffffff';
-            pdfContainer.style.color = '#1f2937'; // text-gray-800
-            pdfContainer.style.fontFamily = 'ui-sans-serif, system-ui, sans-serif';
             pdfContainer.style.position = 'absolute';
             pdfContainer.style.top = '0';
             pdfContainer.style.left = '0';
-            pdfContainer.style.zIndex = '-9999'; // Fica atrás de tudo (invisível pro usuário, mas visível pra biblioteca)
+            pdfContainer.style.width = '800px'; 
+            pdfContainer.style.backgroundColor = '#ffffff';
+            pdfContainer.style.padding = '40px';
+            pdfContainer.style.zIndex = '99999'; // Abaixo do loading, mas acima do resto
+            pdfContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
 
+            // Preparação do HTML puro sem heranças Tailwind que partem no Mobile
             pdfContainer.innerHTML = `
-                <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 20px;">
-                    <h1 style="font-size: 24px; font-weight: bold; color: #1e3a8a; margin: 0;">Análise Trabalhista</h1>
-                    <p style="color: #6b7280; margin-top: 5px; font-size: 14px;">Cliente: <strong>${casoSelecionadoNome}</strong></p>
-                </div>
-
-                <div style="margin-bottom: 30px;">
-                    <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">1. Formulário Preenchido</h2>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
-                        ${dadosCrusHTML}
+                <style>
+                    .pdf-raw { color: #1f2937; line-height: 1.6; font-size: 13px; }
+                    .pdf-raw h1 { font-size: 24px; font-weight: bold; color: #1e3a8a; margin-bottom: 5px; }
+                    .pdf-raw h2 { font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+                    .pdf-raw h3 { font-size: 16px; font-weight: bold; margin-top: 15px; margin-bottom: 10px; }
+                    .pdf-raw p { margin-bottom: 10px; }
+                    .pdf-raw ul { margin-left: 20px; margin-bottom: 10px; list-style-type: disc; }
+                    .pdf-raw li { margin-bottom: 5px; }
+                    .pdf-raw strong { font-weight: bold; }
+                    .grid-pdf { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+                    .dado-lbl { display: block; font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+                    .dado-val { display: block; font-weight: bold; color: #1f2937; }
+                </style>
+                
+                <div class="pdf-raw">
+                    <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 25px;">
+                        <h1>Análise Trabalhista</h1>
+                        <p style="color: #6b7280; font-size: 14px;">Cliente: <strong>${casoSelecionadoNome}</strong></p>
                     </div>
-                </div>
 
-                <div>
-                    <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">2. Parecer da IA</h2>
-                    <div id="pdf-markdown-content" style="font-size: 13px; line-height: 1.6;">
+                    <h2>1. Formulário Preenchido</h2>
+                    <div class="grid-pdf">
+                        ${dadosCrusHTML.replace(/text-gray-400 block text-xs/g, 'dado-lbl').replace(/text-gray-800/g, 'dado-val')}
+                    </div>
+
+                    <h2>2. Parecer da IA</h2>
+                    <div>
                         ${markdownHTML}
                     </div>
                 </div>
             `;
-
-            // Copia os estilos do markdown para o elemento temporário
-            const style = document.createElement('style');
-            style.innerHTML = `
-                #pdf-markdown-content h1 { font-size: 1.5rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1e3a8a; }
-                #pdf-markdown-content h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #2563eb; }
-                #pdf-markdown-content h3 { font-size: 1.125rem; font-weight: bold; margin-top: 0.75rem; margin-bottom: 0.25rem; }
-                #pdf-markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
-                #pdf-markdown-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
-                #pdf-markdown-content li { margin-bottom: 0.25rem; }
-                #pdf-markdown-content strong { font-weight: 600; }
-            `;
-            pdfContainer.appendChild(style);
             
             document.body.appendChild(pdfContainer);
             
             const opt = {
                 margin:       15,
-                filename:     `Analise_Trabalhista_${nomeFormatado}.pdf`,
+                filename:     `Analise_${nomeFormatado}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true, windowWidth: 800, scrollY: 0 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Gera o PDF e logo em seguida apaga o elemento invisível
-            html2pdf().set(opt).from(pdfContainer).save().then(() => {
-                document.body.removeChild(pdfContainer); 
-            });
+            // Atraso intencional para garantir que o telemóvel carregou todo o DOM visível
+            setTimeout(() => {
+                html2pdf().set(opt).from(pdfContainer).save().then(() => {
+                    document.body.removeChild(pdfContainer); 
+                    document.body.removeChild(loadingOverlay); 
+                }).catch(e => {
+                    alert('Erro na geração do PDF no seu dispositivo.');
+                    document.body.removeChild(pdfContainer); 
+                    document.body.removeChild(loadingOverlay); 
+                });
+            }, 800);
         }
 
         // ==========================================
@@ -780,10 +787,10 @@
             const msgEl = document.getElementById('config-msg');
             const btn = document.getElementById('btn-test-api');
             
-            btn.innerHTML = 'Testando...'; btn.disabled = true;
+            btn.innerHTML = 'A testar...'; btn.disabled = true;
             msgEl.classList.remove('hidden');
             msgEl.className = 'mt-4 text-sm text-center text-blue-600';
-            msgEl.innerText = 'Consultando Google...';
+            msgEl.innerText = 'A consultar o Google...';
 
             try {
                 const res = await fetch('/api/test-models', {
@@ -794,7 +801,7 @@
                 
                 if (data.success) {
                     msgEl.className = 'mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md text-xs font-mono text-gray-700 h-32 overflow-y-auto custom-scrollbar text-left';
-                    msgEl.innerHTML = '<strong class="text-green-600 mb-2 block">✓ Conexão bem-sucedida! Modelos:</strong>' + data.models.join('<br>• ');
+                    msgEl.innerHTML = '<strong class="text-green-600 mb-2 block">✓ Ligação bem sucedida! Modelos:</strong>' + data.models.join('<br>• ');
                 } else {
                     msgEl.className = 'mt-4 text-sm p-3 bg-red-50 border border-red-200 text-red-600 font-medium rounded-md break-words text-left';
                     msgEl.innerText = 'Falha: ' + data.message;
@@ -803,7 +810,7 @@
                 msgEl.className = 'mt-4 text-sm text-center text-red-600 font-medium';
                 msgEl.innerText = 'Erro ao comunicar com servidor.';
             } finally {
-                btn.innerHTML = '<i class="ph ph-plugs"></i> Testar Conexão'; btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-plugs"></i> Testar Ligação'; btn.disabled = false;
             }
         }
 
@@ -813,7 +820,7 @@
             const msgEl = document.getElementById('config-msg');
             const btn = document.getElementById('btn-save-config');
             
-            btn.disabled = true; btn.innerHTML = 'Salvando...';
+            btn.disabled = true; btn.innerHTML = 'A guardar...';
             msgEl.classList.remove('hidden');
 
             try {
@@ -837,9 +844,9 @@
                 }
             } catch (error) {
                 msgEl.className = 'mt-4 text-sm text-center p-2 bg-red-50 text-red-700 rounded font-medium';
-                msgEl.innerText = 'Erro de conexão.';
+                msgEl.innerText = 'Erro de ligação.';
             } finally {
-                btn.disabled = false; btn.innerHTML = 'Salvar';
+                btn.disabled = false; btn.innerHTML = 'Guardar';
             }
         }
     </script>
