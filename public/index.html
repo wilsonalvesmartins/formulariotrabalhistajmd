@@ -3,18 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrevista Trabalhista Inteligente</title>
-    <!-- Tailwind CSS para estilização -->
+    <title>Entrevista Trabalhista</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Marked.js para converter Markdown do Gemini em HTML -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- html2pdf.js para gerar o PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Phosphor Icons para ícones -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
-        /* Estilos adicionais para o PDF e formatação Markdown */
+        /* Estilos Markdown */
         #resultado-markdown h1 { font-size: 1.5rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1e3a8a; }
         #resultado-markdown h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #2563eb; }
         #resultado-markdown h3 { font-size: 1.125rem; font-weight: bold; margin-top: 0.75rem; margin-bottom: 0.25rem; }
@@ -23,63 +19,56 @@
         #resultado-markdown li { margin-bottom: 0.25rem; }
         #resultado-markdown strong { font-weight: 600; }
         
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .loader-sm { border: 3px solid #f3f3f3; border-top: 3px solid #ffffff; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen relative">
 
-    <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-        
+    <!-- Interface Pública (Visão do Cliente) -->
+    <div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
         <!-- Header -->
-        <header class="mb-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-blue-900 flex items-center gap-2 justify-center sm:justify-start">
+        <header class="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-center sm:text-left">
+                <h1 class="text-3xl font-bold text-blue-900 flex items-center justify-center sm:justify-start gap-2">
                     <i class="ph ph-scale"></i> Entrevista Trabalhista
                 </h1>
-                <p class="text-gray-500 mt-1">Assistente com IA para análise de casos e elaboração de pedidos.</p>
+                <p class="text-gray-500 mt-1">Envie as informações do seu caso para análise.</p>
             </div>
             
-            <button onclick="document.getElementById('modal-config').classList.remove('hidden')" class="p-2 text-gray-400 hover:text-blue-600 bg-white rounded-full shadow-sm border border-gray-200 transition mt-4 sm:mt-0" title="Configurar API">
-                <i class="ph ph-gear text-2xl"></i>
-            </button>
+            <div class="flex gap-2">
+                <button onclick="abrirModalSenhaRestrito()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg shadow-sm transition flex items-center gap-2" title="Acesso Restrito ao Escritório">
+                    <i class="ph ph-lock-key text-xl"></i>
+                    <span class="hidden sm:inline">Restrito</span>
+                </button>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <!-- Coluna do Formulário -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- Formulário (Ocupa 3 colunas) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-3">
                 <form id="interview-form" class="space-y-5">
                     
-                    <!-- Dados Pessoais -->
                     <div class="space-y-4">
                         <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
-                            <i class="ph ph-user"></i> Dados do Cliente
+                            <i class="ph ph-user"></i> Seus Dados
                         </h2>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                            <input type="text" id="nome" required class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="Ex: João da Silva">
+                            <input type="text" id="nome" required class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition" placeholder="Ex: João da Silva">
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Valor do Salário (R$)</label>
-                                <input type="text" id="salario" placeholder="Ex: 2500,00" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                                <input type="text" id="salario" placeholder="Ex: 2500,00" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tinha CTPS Assinada?</label>
-                                <select id="ctps" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition bg-white">
+                                <select id="ctps" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition bg-white">
                                     <option value="Sim">Sim</option>
                                     <option value="Não">Não</option>
                                     <option value="Apenas em parte do período">Apenas em parte do período</option>
@@ -90,16 +79,15 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Data de Entrada</label>
-                                <input type="date" id="data_entrada" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                                <input type="date" id="data_entrada" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Data de Saída (se houver)</label>
-                                <input type="date" id="data_saida" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                                <input type="date" id="data_saida" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Condições de Trabalho -->
                     <div class="space-y-4 pt-2">
                         <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
                             <i class="ph ph-hard-hat"></i> Condições de Trabalho
@@ -108,7 +96,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Local Insalubre ou Perigoso?</label>
-                                <select id="insalubridade_periculosidade" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition bg-white">
+                                <select id="insalubridade_periculosidade" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition bg-white">
                                     <option value="Nenhum">Nenhum</option>
                                     <option value="Insalubre (Risco à saúde)">Insalubre (Risco à saúde)</option>
                                     <option value="Perigoso (Risco de vida)">Perigoso (Risco de vida)</option>
@@ -118,7 +106,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Recebia Adicional?</label>
-                                <select id="recebia_adicional" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition bg-white">
+                                <select id="recebia_adicional" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition bg-white">
                                     <option value="Não se aplica">Não se aplica</option>
                                     <option value="Não recebia">Não recebia</option>
                                     <option value="Recebia corretamente">Recebia corretamente</option>
@@ -129,11 +117,10 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Horário de Trabalho / Escala</label>
-                            <textarea id="horario_trabalho" rows="2" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="Ex: Segunda a sexta das 08h às 18h, com 1h de almoço. Sábados das 08h às 12h."></textarea>
+                            <textarea id="horario_trabalho" rows="2" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition" placeholder="Ex: Segunda a sexta das 08h às 18h, com 1h de almoço."></textarea>
                         </div>
                     </div>
 
-                    <!-- Verbas Rescisórias e Benefícios -->
                     <div class="space-y-4 pt-2">
                         <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
                             <i class="ph ph-money"></i> Verbas e Direitos
@@ -142,7 +129,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tem Férias Vencidas?</label>
-                                <select id="ferias_vencidas" onchange="toggleFeriasInput()" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition bg-white">
+                                <select id="ferias_vencidas" onchange="toggleFeriasInput()" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition bg-white">
                                     <option value="Não">Não</option>
                                     <option value="Sim">Sim</option>
                                     <option value="Não sabe">Não sabe</option>
@@ -150,24 +137,24 @@
                             </div>
                             <div id="div_quantas_ferias" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Quantas férias vencidas?</label>
-                                <input type="number" id="quantas_ferias" min="1" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="Ex: 2">
+                                <input type="number" id="quantas_ferias" min="1" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition" placeholder="Ex: 2">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Recebia 13º Salário?</label>
-                                <select id="decimo_terceiro" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition bg-white">
+                                <select id="decimo_terceiro" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition bg-white">
                                     <option value="Sim">Sim</option>
                                     <option value="Não">Não</option>
                                     <option value="Apenas alguns anos">Apenas alguns anos</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">FGTS está atrasado/não depositado?</label>
-                                <select id="fgts" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition bg-white">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">FGTS atrasado?</label>
+                                <select id="fgts" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition bg-white">
                                     <option value="Não sabe / Precisa tirar extrato">Não sabe / Precisa tirar extrato</option>
-                                    <option value="Sim, totalmente sem depósito">Sim, totalmente sem depósito</option>
+                                    <option value="Sim, totalmente sem depósito">Sim, sem depósito</option>
                                     <option value="Sim, com falhas (parcial)">Sim, parcial</option>
                                     <option value="Não, está em dia">Não, está em dia</option>
                                 </select>
@@ -175,81 +162,207 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Conhece a CCT da Categoria? (Sindicato)</label>
-                            <input type="text" id="cct" placeholder="Ex: Não, ou Sim (Sindicato dos Comerciários)" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Conhece a CCT da Categoria?</label>
+                            <input type="text" id="cct" placeholder="Ex: Sindicato dos Comerciários" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition">
                         </div>
                     </div>
 
-                    <!-- Outras Observações -->
                     <div class="pt-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Outros Detalhes (Assédio, acidentes, etc.)</label>
-                        <textarea id="detalhes_extras" rows="3" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="Adicione qualquer outra informação relevante do caso..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Outros Detalhes</label>
+                        <textarea id="detalhes_extras" rows="3" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none transition" placeholder="Adicione qualquer outra informação relevante..."></textarea>
                     </div>
 
-                    <button type="submit" id="btn-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 flex justify-center items-center gap-2">
-                        <i class="ph ph-sparkle text-xl"></i>
-                        Analisar Caso e Gerar Pedidos
+                    <button type="submit" id="btn-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-4 rounded-md transition duration-200 flex justify-center items-center gap-2 text-lg">
+                        <i class="ph ph-paper-plane-right text-2xl"></i> Enviar para análise
                     </button>
-                    
                 </form>
             </div>
 
-            <!-- Coluna do Resultado -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col h-full">
-                <h2 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4 flex items-center justify-between">
-                    <span class="flex items-center gap-2">
-                        <i class="ph ph-file-text"></i> Análise do Caso
-                    </span>
-                    <button id="btn-pdf" onclick="gerarPDF()" class="hidden text-sm bg-gray-800 hover:bg-gray-900 text-white py-1.5 px-3 rounded flex items-center gap-1 transition">
-                        <i class="ph ph-download-simple"></i> Baixar PDF
-                    </button>
-                </h2>
-
-                <!-- Estado Inicial / Vazio -->
-                <div id="estado-vazio" class="flex-1 flex flex-col items-center justify-center text-gray-400 py-12">
-                    <i class="ph ph-magic-wand text-5xl mb-3"></i>
-                    <p class="text-center">Preencha o formulário e clique em "Analisar Caso" para a inteligência artificial gerar o resumo e os pedidos jurídicos.</p>
-                </div>
-
-                <!-- Estado Carregando -->
-                <div id="estado-carregando" class="hidden flex-1 flex flex-col items-center justify-center py-12">
-                    <div class="loader mb-4"></div>
-                    <p class="text-blue-600 font-medium">O Gemini está analisando as informações trabalhistas...</p>
-                    <p class="text-sm text-gray-500 mt-2">Isso pode levar alguns segundos.</p>
-                </div>
-
-                <!-- Estado Erro -->
-                <div id="estado-erro" class="hidden flex-1 flex flex-col items-center justify-center py-12 text-red-500 w-full">
-                    <i class="ph ph-warning-circle text-5xl mb-3"></i>
-                    <p class="text-center font-medium text-sm w-full break-words max-h-48 overflow-y-auto px-2 border border-red-100 bg-red-50 p-3 rounded" id="mensagem-erro">Erro ao comunicar.</p>
-                    <button onclick="esconderErro()" class="mt-4 text-sm underline font-bold">Voltar</button>
-                </div>
-
-                <!-- Resultado -->
-                <div id="conteudo-resultado" class="hidden flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                    <!-- O contéudo será injetado aqui pelo marked.js para formatação e pelo html2pdf -->
-                    <div id="documento-pdf-container" class="p-2 relative">
-                        <div id="aviso-modelo" class="text-xs text-gray-400 mb-2 border-b border-gray-100 pb-1 italic"></div>
-                        <div id="resultado-markdown" class="text-gray-800 text-sm"></div>
+            <!-- Coluna de Status (Ocupa 2 colunas) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-2 flex flex-col items-center justify-center text-center">
+                
+                <div id="status-inicial" class="flex flex-col items-center">
+                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                        <i class="ph ph-files text-4xl text-blue-500"></i>
                     </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Envio de Informações</h2>
+                    <p class="text-gray-500 text-sm">Preencha o formulário ao lado com os detalhes da sua situação trabalhista. Nossos especialistas receberão seus dados de forma segura para análise.</p>
+                </div>
+
+                <div id="status-enviando" class="hidden flex flex-col items-center">
+                    <div class="loader mb-4"></div>
+                    <p class="text-blue-600 font-medium">Enviando seus dados...</p>
+                </div>
+
+                <div id="status-sucesso" class="hidden flex flex-col items-center w-full">
+                    <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-4 text-green-500">
+                        <i class="ph ph-check-circle text-5xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Dados Enviados!</h2>
+                    <p class="text-gray-500 text-sm mb-6">Recebemos suas informações com sucesso. Nossa equipe jurídica fará a análise do seu caso.</p>
+                    <button onclick="resetarFormulario()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium">
+                        Enviar outro caso
+                    </button>
+                </div>
+
+                <div id="status-erro" class="hidden flex flex-col items-center w-full">
+                    <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4 text-red-500">
+                        <i class="ph ph-warning-circle text-5xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Ops! Ocorreu um erro.</h2>
+                    <p id="msg-erro-envio" class="text-red-500 text-sm mb-6"></p>
+                    <button onclick="mostrarStatus('status-inicial')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium">
+                        Tentar novamente
+                    </button>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- Modal de Configuração -->
-    <div id="modal-config" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+    <!-- Modal de Senha para Área Restrita -->
+    <div id="modal-senha-restrito" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] px-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm transform transition-all">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <i class="ph ph-lock-key text-blue-600"></i> Acesso Restrito
+            </h3>
+            <p class="text-sm text-gray-500 mb-4">Área exclusiva para advogados/administradores.</p>
+            
+            <input type="password" id="input-senha-restrito" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none mb-4" placeholder="Senha de acesso" onkeypress="if(event.key === 'Enter') acessarAreaRestrita()">
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="document.getElementById('modal-senha-restrito').classList.add('hidden')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition font-medium">Cancelar</button>
+                <button onclick="acessarAreaRestrita()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition flex items-center gap-2">
+                    Entrar <i class="ph ph-arrow-right"></i>
+                </button>
+            </div>
+            <p id="msg-erro-senha" class="text-red-500 text-sm mt-3 hidden text-center font-medium bg-red-50 p-2 rounded">Senha incorreta!</p>
+        </div>
+    </div>
+
+    <!-- PAINEL RESTRITO (Tela Cheia) -->
+    <div id="painel-restrito" class="hidden fixed inset-0 bg-gray-100 z-50 flex flex-col h-screen overflow-hidden">
+        <!-- Header Admin -->
+        <header class="bg-white border-b border-gray-200 p-4 shadow-sm flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded flex items-center justify-center shadow-inner">
+                    <i class="ph ph-shield-check text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 leading-tight">Painel Administrativo</h2>
+                    <p class="text-xs text-gray-500">Gestão de Casos Trabalhistas</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('modal-config').classList.remove('hidden')" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition flex items-center gap-2 border border-gray-200">
+                    <i class="ph ph-gear"></i> <span class="hidden sm:inline text-sm font-medium">API Gemini</span>
+                </button>
+                <button onclick="fecharAreaRestrita()" class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition flex items-center gap-2 font-medium">
+                    <i class="ph ph-sign-out"></i> <span class="hidden sm:inline">Sair</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Corpo Admin -->
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <!-- Sidebar: Lista de Entrevistas -->
+            <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 flex flex-col h-1/3 md:h-full">
+                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Caixa de Entrada</h3>
+                    <button onclick="carregarListaAdmin()" class="text-blue-600 hover:text-blue-800" title="Atualizar lista">
+                        <i class="ph ph-arrows-clockwise text-lg"></i>
+                    </button>
+                </div>
+                <div id="admin-lista" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                    <div class="text-center py-8 text-gray-400 text-sm">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Área Principal: Detalhes e IA -->
+            <div class="w-full md:w-2/3 lg:w-3/4 bg-gray-50 flex flex-col h-2/3 md:h-full relative">
+                
+                <!-- Tela Vazia -->
+                <div id="admin-vazio" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-10 bg-gray-50">
+                    <i class="ph ph-folder-open text-6xl mb-4 text-gray-300"></i>
+                    <p class="text-lg">Selecione um caso na lista para analisar.</p>
+                </div>
+
+                <!-- Conteúdo do Caso Selecionado -->
+                <div id="admin-conteudo" class="hidden flex-col h-full z-20">
+                    <!-- Toolbar Superior -->
+                    <div class="bg-white p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 shadow-sm z-10">
+                        <div>
+                            <h2 id="admin-cliente-nome" class="text-2xl font-bold text-gray-800">Nome do Cliente</h2>
+                            <p id="admin-cliente-data" class="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                                <i class="ph ph-calendar-blank"></i> Recebido em: --
+                            </p>
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="btn-gerar-ia" onclick="gerarAnaliseIA()" class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                                <i class="ph ph-sparkle"></i> Gerar Análise IA
+                            </button>
+                            <button id="btn-baixar-pdf" onclick="gerarPDFAdmin()" class="hidden flex-1 sm:flex-none px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                                <i class="ph ph-download-simple"></i> PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Corpo de Visualização (Dividido em 2 abas/áreas no PC) -->
+                    <div class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+                        
+                        <!-- Dados Originais do Cliente (Sempre visível) -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                                <i class="ph ph-clipboard-text"></i> Formulário Preenchido
+                            </h3>
+                            <div id="admin-dados-crus" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-700">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Área da IA -->
+                        <div id="admin-area-ia" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 min-h-[300px] relative">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between border-b pb-2">
+                                <span class="flex items-center gap-2"><i class="ph ph-robot"></i> Parecer da IA</span>
+                                <span id="admin-modelo-usado" class="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded hidden"></span>
+                            </h3>
+
+                            <div id="admin-ia-vazio" class="py-12 flex flex-col items-center justify-center text-gray-400">
+                                <i class="ph ph-magic-wand text-4xl mb-3"></i>
+                                <p>Análise de IA ainda não foi gerada para este caso.</p>
+                                <p class="text-xs mt-1">Clique no botão azul acima para gerar.</p>
+                            </div>
+
+                            <div id="admin-ia-carregando" class="hidden py-12 flex flex-col items-center justify-center">
+                                <div class="loader mb-4"></div>
+                                <p class="text-blue-600 font-medium">Conectando ao Gemini e analisando caso...</p>
+                            </div>
+                            
+                            <div id="admin-ia-erro" class="hidden py-6 text-red-500 text-center text-sm font-medium bg-red-50 rounded-lg p-4"></div>
+
+                            <!-- Onde o PDF captura -->
+                            <div id="documento-pdf-container" class="hidden">
+                                <div id="resultado-markdown" class="text-gray-800 text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuração da API (Admin) -->
+    <div id="modal-config" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[70] px-4">
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
             <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <i class="ph ph-lock-key text-blue-600"></i> Configuração da API
             </h3>
-            <p class="text-sm text-gray-500 mb-4">Configure sua chave ou teste se ela está funcionando corretamente e quais modelos do Gemini ela tem acesso na sua VPS.</p>
+            <p class="text-sm text-gray-500 mb-4">Configure a chave do Google Gemini para habilitar as análises.</p>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Sistema</label>
-                    <input type="password" id="config-password" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none" placeholder="Sua senha secreta">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha Restrita</label>
+                    <input type="password" id="config-password" class="w-full rounded-md border border-gray-300 p-2.5 focus:border-blue-500 outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Chave API (Gemini)</label>
@@ -258,23 +371,25 @@
             </div>
 
             <div class="mt-6 flex flex-wrap justify-between gap-3">
-                <button type="button" onclick="testarAPI()" id="btn-test-api" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition flex items-center gap-2 order-1 w-full sm:w-auto justify-center">
-                    <i class="ph ph-plugs"></i> Testar Conexão / Modelos
+                <button type="button" onclick="testarAPI()" id="btn-test-api" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition flex items-center gap-2">
+                    <i class="ph ph-plugs"></i> Testar Conexão
                 </button>
-                
-                <div class="flex gap-3 order-2 w-full sm:w-auto justify-end">
+                <div class="flex gap-3">
                     <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition">Cancelar</button>
-                    <button onclick="salvarConfiguracao()" id="btn-save-config" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition flex items-center gap-2">
-                        <i class="ph ph-floppy-disk"></i> Salvar na VPS
+                    <button onclick="salvarConfiguracao()" id="btn-save-config" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition">
+                        Salvar
                     </button>
                 </div>
             </div>
-            
             <div id="config-msg" class="hidden mt-4"></div>
         </div>
     </div>
 
+
     <script>
+        // ==========================================
+        // LÓGICA DA INTERFACE PÚBLICA (CLIENTE)
+        // ==========================================
         function toggleFeriasInput() {
             const select = document.getElementById('ferias_vencidas');
             const divQuantas = document.getElementById('div_quantas_ferias');
@@ -286,50 +401,374 @@
             }
         }
 
-        function mostrarEstado(id) {
-            ['estado-vazio', 'estado-carregando', 'estado-erro', 'conteudo-resultado'].forEach(el => {
+        function mostrarStatus(id) {
+            ['status-inicial', 'status-enviando', 'status-sucesso', 'status-erro'].forEach(el => {
                 document.getElementById(el).classList.add('hidden');
             });
             document.getElementById(id).classList.remove('hidden');
         }
 
-        function esconderErro() {
-            mostrarEstado('estado-vazio');
+        function resetarFormulario() {
+            document.getElementById('interview-form').reset();
+            toggleFeriasInput();
+            mostrarStatus('status-inicial');
+            document.getElementById('btn-submit').disabled = false;
+            document.getElementById('btn-submit').classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
+        document.getElementById('interview-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btnSubmit = document.getElementById('btn-submit');
+            btnSubmit.disabled = true; 
+            btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+            mostrarStatus('status-enviando');
+            
+            const dados = {
+                nome: document.getElementById('nome').value,
+                data_entrada: document.getElementById('data_entrada').value ? new Date(document.getElementById('data_entrada').value).toLocaleDateString('pt-BR') : 'Não informada',
+                data_saida: document.getElementById('data_saida').value ? new Date(document.getElementById('data_saida').value).toLocaleDateString('pt-BR') : 'Ainda a trabalhar',
+                salario: document.getElementById('salario').value || 'Não informado',
+                ctps: document.getElementById('ctps').value,
+                insalubridade_periculosidade: document.getElementById('insalubridade_periculosidade').value,
+                recebia_adicional: document.getElementById('recebia_adicional').value,
+                horario_trabalho: document.getElementById('horario_trabalho').value || 'Não detalhado',
+                ferias_vencidas: document.getElementById('ferias_vencidas').value,
+                quantas_ferias: document.getElementById('quantas_ferias').value || '0',
+                decimo_terceiro: document.getElementById('decimo_terceiro').value,
+                fgts: document.getElementById('fgts').value,
+                cct: document.getElementById('cct').value || 'Não informada',
+                detalhes_extras: document.getElementById('detalhes_extras').value || 'Nenhum.'
+            };
+
+            try {
+                // Envia apenas os dados puros para a VPS salvar
+                const response = await fetch('/api/interviews', {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                if (response.status === 404) throw new Error("Servidor desatualizado (Erro 404).");
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || "Erro ao salvar.");
+                
+                mostrarStatus('status-sucesso');
+            } catch (error) {
+                console.error("Erro no envio:", error);
+                document.getElementById('msg-erro-envio').innerText = error.message;
+                mostrarStatus('status-erro');
+                btnSubmit.disabled = false; 
+                btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+
+        // ==========================================
+        // LÓGICA DA ÁREA RESTRITA (ADMIN)
+        // ==========================================
+        let senhaAdminAtiva = '';
+        let casoSelecionadoId = null;
+        let casoSelecionadoNome = 'Cliente';
+
+        function abrirModalSenhaRestrito() {
+            if (senhaAdminAtiva) {
+                abrirPainelRestrito();
+            } else {
+                document.getElementById('input-senha-restrito').value = '';
+                document.getElementById('msg-erro-senha').classList.add('hidden');
+                document.getElementById('modal-senha-restrito').classList.remove('hidden');
+            }
+        }
+
+        async function acessarAreaRestrita() {
+            const senhaTentativa = document.getElementById('input-senha-restrito').value;
+            const btn = event.target.tagName === 'BUTTON' ? event.target : document.querySelector('#modal-senha-restrito button.bg-blue-600');
+            const textoOriginal = btn.innerHTML;
+            
+            btn.innerHTML = '<div class="loader-sm mx-auto"></div>';
+            btn.disabled = true;
+
+            try {
+                // Tenta buscar a lista. Se retornar 401, a senha está errada.
+                const res = await fetch('/api/interviews', {
+                    headers: { 'x-auth-password': senhaTentativa }
+                });
+                
+                if (res.status === 401) {
+                    document.getElementById('msg-erro-senha').classList.remove('hidden');
+                    return;
+                }
+
+                if (!res.ok) throw new Error("Erro no servidor.");
+
+                // Sucesso!
+                senhaAdminAtiva = senhaTentativa;
+                document.getElementById('modal-senha-restrito').classList.add('hidden');
+                
+                // Preenche a configuração automaticamente com a senha logada para facilitar
+                document.getElementById('config-password').value = senhaAdminAtiva;
+                
+                abrirPainelRestrito();
+
+            } catch (error) {
+                alert("Falha de conexão com a VPS.");
+            } finally {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            }
+        }
+
+        function fecharAreaRestrita() {
+            senhaAdminAtiva = '';
+            document.getElementById('painel-restrito').classList.add('hidden');
+            casoSelecionadoId = null;
+        }
+
+        async function abrirPainelRestrito() {
+            document.getElementById('painel-restrito').classList.remove('hidden');
+            document.getElementById('admin-vazio').classList.remove('hidden');
+            document.getElementById('admin-conteudo').classList.add('hidden');
+            carregarListaAdmin();
+        }
+
+        async function carregarListaAdmin() {
+            const lista = document.getElementById('admin-lista');
+            lista.innerHTML = '<div class="text-center py-6 text-gray-400"><div class="loader mx-auto mb-2 border-gray-300 border-t-blue-500"></div>Buscando...</div>';
+
+            try {
+                const res = await fetch('/api/interviews', {
+                    headers: { 'x-auth-password': senhaAdminAtiva }
+                });
+                
+                if (res.status === 401) {
+                    fecharAreaRestrita();
+                    return;
+                }
+                
+                const data = await res.json();
+
+                if (data.entrevistas.length === 0) {
+                    lista.innerHTML = '<div class="text-center text-gray-400 py-6 text-sm">Nenhum formulário recebido.</div>';
+                    return;
+                }
+
+                lista.innerHTML = '';
+                data.entrevistas.forEach(entrevista => {
+                    const dataObj = new Date(entrevista.data_criacao);
+                    const dataStr = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                    const isAnalisado = entrevista.status === 'analisado';
+                    
+                    const div = document.createElement('div');
+                    div.className = `p-3 mb-1 cursor-pointer rounded-lg border-l-4 transition hover:bg-gray-100 ${casoSelecionadoId === entrevista.id ? 'bg-blue-50 border-blue-500' : 'bg-white border-transparent'}`;
+                    
+                    div.onclick = () => carregarCaso(entrevista.id);
+                    
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-gray-800 text-sm truncate pr-2">${entrevista.nome_cliente}</h4>
+                            ${isAnalisado 
+                                ? '<span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0"><i class="ph ph-check-circle"></i> IA</span>' 
+                                : '<span class="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0"><i class="ph ph-clock"></i> Novo</span>'
+                            }
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">${dataStr}</p>
+                    `;
+                    lista.appendChild(div);
+                });
+
+            } catch (error) {
+                lista.innerHTML = `<div class="text-red-500 text-center py-4 text-sm font-medium">Erro ao carregar lista.</div>`;
+            }
+        }
+
+        async function carregarCaso(id) {
+            casoSelecionadoId = id;
+            carregarListaAdmin(); // Re-renderiza a lista para atualizar o item ativo
+
+            document.getElementById('admin-vazio').classList.add('hidden');
+            const cont = document.getElementById('admin-conteudo');
+            cont.classList.remove('hidden');
+            cont.style.opacity = '0.5'; // Estado de carregamento visual
+
+            try {
+                const res = await fetch(`/api/interviews/${id}`, {
+                    headers: { 'x-auth-password': senhaAdminAtiva }
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error();
+
+                const caso = data.entrevista;
+                casoSelecionadoNome = caso.dados.nome;
+
+                // Preencher Header
+                document.getElementById('admin-cliente-nome').innerText = caso.dados.nome;
+                const d = new Date(caso.data_criacao);
+                document.getElementById('admin-cliente-data').innerHTML = `<i class="ph ph-calendar-blank"></i> Recebido em: ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR')}`;
+
+                // Preencher Dados Crus
+                const gridDados = document.getElementById('admin-dados-crus');
+                gridDados.innerHTML = `
+                    <div><span class="text-gray-400 block text-xs">Período</span> <strong class="text-gray-800">${caso.dados.data_entrada} até ${caso.dados.data_saida}</strong></div>
+                    <div><span class="text-gray-400 block text-xs">Salário Base</span> <strong class="text-gray-800">R$ ${caso.dados.salario}</strong></div>
+                    <div><span class="text-gray-400 block text-xs">CTPS Assinada</span> <strong class="text-gray-800">${caso.dados.ctps}</strong></div>
+                    <div><span class="text-gray-400 block text-xs">Insalubre/Perigoso</span> <strong class="text-gray-800">${caso.dados.insalubridade_periculosidade}</strong></div>
+                    <div class="md:col-span-2"><span class="text-gray-400 block text-xs">Jornada/Escala</span> <strong class="text-gray-800">${caso.dados.horario_trabalho}</strong></div>
+                    <div><span class="text-gray-400 block text-xs">Adicional Recebido</span> <strong class="text-gray-800">${caso.dados.recebia_adicional}</strong></div>
+                    <div><span class="text-gray-400 block text-xs">Férias Vencidas</span> <strong class="text-gray-800">${caso.dados.ferias_vencidas} (${caso.dados.quantas_ferias})</strong></div>
+                    <div><span class="text-gray-400 block text-xs">13º Salário</span> <strong class="text-gray-800">${caso.dados.decimo_terceiro}</strong></div>
+                    <div><span class="text-gray-400 block text-xs">FGTS</span> <strong class="text-gray-800">${caso.dados.fgts}</strong></div>
+                    <div class="md:col-span-2"><span class="text-gray-400 block text-xs">Convenção Coletiva (CCT)</span> <strong class="text-gray-800">${caso.dados.cct}</strong></div>
+                    <div class="md:col-span-2"><span class="text-gray-400 block text-xs">Observações do Cliente</span> <p class="text-gray-800 bg-gray-50 p-3 rounded mt-1 whitespace-pre-wrap">${caso.dados.detalhes_extras}</p></div>
+                `;
+
+                // Configurar Área da IA
+                resetarAreaIA();
+                
+                if (caso.status === 'analisado' && caso.analise_markdown) {
+                    exibirAnalisePronta(caso.analise_markdown, caso.usedModel);
+                }
+
+            } catch (error) {
+                alert('Erro ao carregar os dados completos do caso.');
+            } finally {
+                cont.style.opacity = '1';
+            }
+        }
+
+        // ==========================================
+        // GERAÇÃO DE ANÁLISE PELA IA (ADMIN)
+        // ==========================================
+        function resetarAreaIA() {
+            document.getElementById('admin-ia-vazio').classList.remove('hidden');
+            document.getElementById('admin-ia-carregando').classList.add('hidden');
+            document.getElementById('admin-ia-erro').classList.add('hidden');
+            document.getElementById('documento-pdf-container').classList.add('hidden');
+            document.getElementById('btn-baixar-pdf').classList.add('hidden');
+            document.getElementById('admin-modelo-usado').classList.add('hidden');
+            document.getElementById('btn-gerar-ia').disabled = false;
+            document.getElementById('btn-gerar-ia').classList.remove('opacity-50');
+            document.getElementById('btn-gerar-ia').innerHTML = '<i class="ph ph-sparkle"></i> Gerar Análise IA';
+        }
+
+        function exibirAnalisePronta(markdownTexto, modelo) {
+            document.getElementById('admin-ia-vazio').classList.add('hidden');
+            document.getElementById('admin-ia-carregando').classList.add('hidden');
+            
+            document.getElementById('resultado-markdown').innerHTML = marked.parse(markdownTexto);
+            document.getElementById('documento-pdf-container').classList.remove('hidden');
+            
+            if (modelo) {
+                const elModelo = document.getElementById('admin-modelo-usado');
+                elModelo.innerText = modelo.replace('models/', '');
+                elModelo.classList.remove('hidden');
+            }
+
+            document.getElementById('btn-baixar-pdf').classList.remove('hidden');
+            document.getElementById('btn-gerar-ia').innerHTML = '<i class="ph ph-arrows-clockwise"></i> Refazer Análise';
+        }
+
+        async function gerarAnaliseIA() {
+            if (!casoSelecionadoId) return;
+
+            const btn = document.getElementById('btn-gerar-ia');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            
+            document.getElementById('admin-ia-vazio').classList.add('hidden');
+            document.getElementById('documento-pdf-container').classList.add('hidden');
+            document.getElementById('admin-ia-erro').classList.add('hidden');
+            document.getElementById('admin-ia-carregando').classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/api/interviews/${casoSelecionadoId}/analyze`, {
+                    method: 'POST',
+                    headers: { 'x-auth-password': senhaAdminAtiva }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro desconhecido na API.");
+                }
+
+                exibirAnalisePronta(data.markdown, data.usedModel);
+                carregarListaAdmin(); // Atualiza o status na barra lateral para "IA (Verde)"
+
+            } catch (error) {
+                const elErro = document.getElementById('admin-ia-erro');
+                elErro.innerText = error.message;
+                elErro.classList.remove('hidden');
+                document.getElementById('admin-ia-carregando').classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            }
+        }
+
+        function gerarPDFAdmin() {
+            const elementoParaPDF = document.getElementById('documento-pdf-container');
+            const nomeFormatado = casoSelecionadoNome.replace(/\s+/g, '_');
+            
+            const clone = elementoParaPDF.cloneNode(true);
+            clone.classList.remove('hidden'); // O container original está hidden no fluxo normal da UI
+            clone.style.position = 'absolute';
+            clone.style.top = '-9999px';
+            clone.style.left = '0';
+            clone.style.width = '800px'; 
+            clone.style.backgroundColor = 'white';
+            clone.style.padding = '30px';
+            clone.style.height = 'auto';
+            clone.style.overflow = 'visible';
+            
+            document.body.appendChild(clone);
+            
+            const opt = {
+                margin:       15,
+                filename:     `Analise_Trabalhista_${nomeFormatado}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, windowWidth: 800, scrollY: 0 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(clone).save().then(() => {
+                document.body.removeChild(clone); 
+            });
+        }
+
+        // ==========================================
+        // CONFIGURAÇÕES DA VPS (Admin Geral)
+        // ==========================================
         async function testarAPI() {
             const apiKey = document.getElementById('config-apikey').value;
             const msgEl = document.getElementById('config-msg');
             const btn = document.getElementById('btn-test-api');
             
-            btn.innerHTML = 'Testando...';
-            btn.disabled = true;
+            btn.innerHTML = 'Testando...'; btn.disabled = true;
             msgEl.classList.remove('hidden');
             msgEl.className = 'mt-4 text-sm text-center text-blue-600';
-            msgEl.innerText = 'Consultando o Google a partir da VPS...';
+            msgEl.innerText = 'Consultando Google...';
 
             try {
                 const res = await fetch('/api/test-models', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apiKey: apiKey }) 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey }) 
                 });
-                
                 const data = await res.json();
                 
                 if (data.success) {
                     msgEl.className = 'mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md text-xs font-mono text-gray-700 h-32 overflow-y-auto custom-scrollbar text-left';
-                    msgEl.innerHTML = '<strong class="text-green-600 mb-2 block">✓ Conexão bem-sucedida! Modelos liberados:</strong>' + data.models.join('<br>• ');
+                    msgEl.innerHTML = '<strong class="text-green-600 mb-2 block">✓ Conexão bem-sucedida! Modelos:</strong>' + data.models.join('<br>• ');
                 } else {
                     msgEl.className = 'mt-4 text-sm p-3 bg-red-50 border border-red-200 text-red-600 font-medium rounded-md break-words text-left';
                     msgEl.innerText = 'Falha: ' + data.message;
                 }
             } catch (error) {
                 msgEl.className = 'mt-4 text-sm text-center text-red-600 font-medium';
-                msgEl.innerText = 'Erro ao conectar com o seu servidor Node.js. O backend está rodando no Coolify?';
+                msgEl.innerText = 'Erro ao comunicar com servidor.';
             } finally {
-                btn.innerHTML = '<i class="ph ph-plugs"></i> Testar Conexão / Modelos';
-                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-plugs"></i> Testar Conexão'; btn.disabled = false;
             }
         }
 
@@ -339,158 +778,35 @@
             const msgEl = document.getElementById('config-msg');
             const btn = document.getElementById('btn-save-config');
             
-            btn.disabled = true;
-            btn.innerHTML = 'Salvando...';
+            btn.disabled = true; btn.innerHTML = 'Salvando...';
             msgEl.classList.remove('hidden');
 
             try {
                 const res = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password, apiKey })
                 });
-                
                 const data = await res.json();
                 
                 if (data.success) {
-                    msgEl.className = 'mt-4 text-sm text-center p-2 bg-green-50 text-green-700 rounded';
+                    msgEl.className = 'mt-4 text-sm text-center p-2 bg-green-50 text-green-700 rounded font-medium';
                     msgEl.innerText = data.message;
                     setTimeout(() => {
                         document.getElementById('modal-config').classList.add('hidden');
                         msgEl.classList.add('hidden');
-                        document.getElementById('config-password').value = '';
+                        // Limpa a chave visualmente por segurança, mantemos a senha pois já está logado
                         document.getElementById('config-apikey').value = '';
                     }, 2000);
                 } else {
-                    msgEl.className = 'mt-4 text-sm text-center p-2 bg-red-50 text-red-700 rounded';
+                    msgEl.className = 'mt-4 text-sm text-center p-2 bg-red-50 text-red-700 rounded font-medium';
                     msgEl.innerText = data.message;
                 }
             } catch (error) {
-                msgEl.className = 'mt-4 text-sm text-center p-2 bg-red-50 text-red-700 rounded';
-                msgEl.innerText = 'Erro ao conectar com a VPS para salvar a chave.';
+                msgEl.className = 'mt-4 text-sm text-center p-2 bg-red-50 text-red-700 rounded font-medium';
+                msgEl.innerText = 'Erro de conexão.';
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar na VPS';
+                btn.disabled = false; btn.innerHTML = 'Salvar';
             }
-        }
-
-        // Listener do Formulário
-        document.getElementById('interview-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Coletar Dados
-            const dados = {
-                nome: document.getElementById('nome').value,
-                data_entrada: document.getElementById('data_entrada').value ? new Date(document.getElementById('data_entrada').value).toLocaleDateString('pt-BR') : 'Não informada',
-                data_saida: document.getElementById('data_saida').value ? new Date(document.getElementById('data_saida').value).toLocaleDateString('pt-BR') : 'Ainda a trabalhar / Não informada',
-                salario: document.getElementById('salario').value || 'Não informado',
-                ctps: document.getElementById('ctps').value,
-                insalubridade_periculosidade: document.getElementById('insalubridade_periculosidade').value,
-                recebia_adicional: document.getElementById('recebia_adicional').value,
-                horario_trabalho: document.getElementById('horario_trabalho').value || 'Não informado detalhadamente',
-                ferias_vencidas: document.getElementById('ferias_vencidas').value,
-                quantas_ferias: document.getElementById('quantas_ferias').value || '0',
-                decimo_terceiro: document.getElementById('decimo_terceiro').value,
-                fgts: document.getElementById('fgts').value,
-                cct: document.getElementById('cct').value || 'Não sabe/Não informado',
-                detalhes_extras: document.getElementById('detalhes_extras').value || 'Nenhum detalhe extra.'
-            };
-
-            const btnSubmit = document.getElementById('btn-submit');
-            btnSubmit.disabled = true;
-            btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
-            document.getElementById('btn-pdf').classList.add('hidden');
-            
-            mostrarEstado('estado-carregando');
-
-            // Construir Prompt para o Gemini
-            const systemPrompt = `Você é um Assistente Jurídico especializado em Direito do Trabalho Brasileiro (CLT). Seu objetivo é analisar dados de uma entrevista com um trabalhador, gerar um resumo profissional do caso e listar os principais pedidos para uma eventual Reclamação Trabalhista (ex: horas extras, verbas rescisórias, reconhecimento de vínculo, adicional de insalubridade, etc.).
-
-Regras de Formatação:
-- Responda EXCLUSIVAMENTE em formato Markdown.
-- Use títulos adequados (## Resumo do Caso, ## Principais Pedidos, etc).
-- Seja objetivo, técnico e claro.
-- Não crie a petição inicial, apenas o resumo e a lista de pedidos.
-- Mencione os dados do cliente no topo do relatório.`;
-
-            const userPrompt = `Análise do Cliente:
-- Nome: ${dados.nome}
-- Período Trabalhado: de ${dados.data_entrada} até ${dados.data_saida}
-- Último Salário: R$ ${dados.salario}
-- CTPS Assinada: ${dados.ctps}
-- Ambiente Insalubre/Perigoso: ${dados.insalubridade_periculosidade}
-- Recebimento do Adicional: ${dados.recebia_adicional}
-- Horário de Trabalho e Escala: ${dados.horario_trabalho}
-- Férias Vencidas: ${dados.ferias_vencidas} (Quantidade: ${dados.quantas_ferias})
-- 13º Salário: ${dados.decimo_terceiro}
-- Situação do FGTS: ${dados.fgts}
-- Convenção Coletiva (CCT): ${dados.cct}
-- Observações Extras: ${dados.detalhes_extras}
-
-Por favor, gere o relatório de análise e a lista de pedidos trabalhistas com base nesses fatos.`;
-
-            try {
-                // Comunicação segura com o seu Node.js na VPS (não mais direto para o Google)
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userPrompt, systemPrompt })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || data.message || "Erro desconhecido retornado pelo servidor.");
-                }
-
-                const textoGerado = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if (!textoGerado) {
-                    throw new Error("A IA não retornou um texto válido. A resposta da API pode estar vazia ou o modelo falhou na sua conta.");
-                }
-
-                if (data.usedModel) {
-                    document.getElementById('aviso-modelo').innerText = `Analisado pelo modelo: ${data.usedModel.replace('models/', '')}`;
-                }
-
-                // Usar Marked.js para converter o Markdown em HTML puro
-                document.getElementById('resultado-markdown').innerHTML = marked.parse(textoGerado);
-                
-                mostrarEstado('conteudo-resultado');
-                document.getElementById('btn-pdf').classList.remove('hidden');
-
-            } catch (error) {
-                console.error("Erro na integração:", error);
-                document.getElementById('mensagem-erro').innerText = error.message;
-                mostrarEstado('estado-erro');
-            } finally {
-                btnSubmit.disabled = false;
-                btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        });
-
-        // Função para gerar e baixar o PDF
-        function gerarPDF() {
-            const elementoParaPDF = document.getElementById('documento-pdf-container');
-            const nomeCliente = document.getElementById('nome').value || 'Cliente';
-            
-            // Configurações do html2pdf
-            const opt = {
-                margin:       15,
-                filename:     `Analise_Trabalhista_${nomeCliente.replace(/\s+/g, '_')}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            // Estilização temporária apenas para a geração do PDF
-            const elementoClonado = elementoParaPDF.cloneNode(true);
-            elementoClonado.style.padding = '20px';
-            elementoClonado.style.backgroundColor = 'white';
-            const aviso = elementoClonado.querySelector('#aviso-modelo');
-            if (aviso) aviso.remove();
-            
-            html2pdf().set(opt).from(elementoClonado).save();
         }
     </script>
 </body>
