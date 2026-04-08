@@ -699,84 +699,71 @@
             }
         }
 
-        // Função reescrita para forçar a renderização do ecrã e resolver PDF em branco
+        // Função reescrita com método de Texto/String (100% garantido para evitar PDF branco em telemóvel)
         function gerarPDFAdmin() {
             const nomeFormatado = casoSelecionadoNome.replace(/\s+/g, '_');
             const markdownHTML = document.getElementById('resultado-markdown').innerHTML;
             const dadosCrusHTML = document.getElementById('admin-dados-crus').innerHTML;
 
-            // Criar um ecrã de carregamento para esconder a "magia"
             const loadingOverlay = document.createElement('div');
             loadingOverlay.className = 'fixed inset-0 bg-gray-900 bg-opacity-90 z-[999999] flex flex-col items-center justify-center text-white';
             loadingOverlay.innerHTML = '<div class="loader mb-4 border-t-white"></div><h2 class="text-2xl font-bold">A gerar PDF...</h2><p class="text-sm mt-2 text-gray-300">Não feche a página.</p>';
             document.body.appendChild(loadingOverlay);
 
-            // Criar um div de renderização na raiz do Documento, absolutamente isolado do Flexbox
-            const pdfContainer = document.createElement('div');
-            pdfContainer.style.position = 'absolute';
-            pdfContainer.style.top = '0';
-            pdfContainer.style.left = '0';
-            pdfContainer.style.width = '800px'; 
-            pdfContainer.style.backgroundColor = '#ffffff';
-            pdfContainer.style.padding = '40px';
-            pdfContainer.style.zIndex = '99999'; // Abaixo do loading, mas acima do resto
-            pdfContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+            // Substitui as classes do Tailwind por CSS puro em linha para garantir que o PDF lê os estilos corretamente
+            const dadosLimpos = dadosCrusHTML
+                .replace(/class="text-gray-400 block text-xs"/g, 'style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 2px;"')
+                .replace(/class="text-gray-800"/g, 'style="font-size: 14px; font-weight: bold; color: #1f2937; display: block;"')
+                .replace(/class="md:col-span-2 sm:col-span-2"/g, 'style="grid-column: span 2;"')
+                .replace(/class="text-gray-800 bg-gray-50 p-3 rounded mt-1 whitespace-pre-wrap"/g, 'style="font-size: 14px; color: #1f2937; background-color: #f9fafb; padding: 12px; border-radius: 6px; margin-top: 4px; white-space: pre-wrap;"');
 
-            // Preparação do HTML puro sem heranças Tailwind que partem no Mobile
-            pdfContainer.innerHTML = `
+            const htmlString = `
                 <style>
-                    .pdf-raw { color: #1f2937; line-height: 1.6; font-size: 13px; }
-                    .pdf-raw h1 { font-size: 24px; font-weight: bold; color: #1e3a8a; margin-bottom: 5px; }
-                    .pdf-raw h2 { font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
-                    .pdf-raw h3 { font-size: 16px; font-weight: bold; margin-top: 15px; margin-bottom: 10px; }
-                    .pdf-raw p { margin-bottom: 10px; }
-                    .pdf-raw ul { margin-left: 20px; margin-bottom: 10px; list-style-type: disc; }
-                    .pdf-raw li { margin-bottom: 5px; }
-                    .pdf-raw strong { font-weight: bold; }
-                    .grid-pdf { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-                    .dado-lbl { display: block; font-size: 11px; color: #6b7280; margin-bottom: 2px; }
-                    .dado-val { display: block; font-weight: bold; color: #1f2937; }
+                    .pdf-container { font-family: Arial, sans-serif; padding: 20px; color: #1f2937; }
+                    .pdf-header { border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 20px; }
+                    .pdf-header h1 { font-size: 24px; font-weight: bold; color: #1e3a8a; margin: 0 0 5px 0; }
+                    .pdf-section-title { font-size: 18px; font-weight: bold; color: #2563eb; margin: 25px 0 15px 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+                    .pdf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                    .pdf-markdown h1 { font-size: 20px; color: #1e3a8a; font-weight: bold; margin: 15px 0 10px 0; }
+                    .pdf-markdown h2 { font-size: 16px; color: #2563eb; font-weight: bold; margin: 15px 0 10px 0; }
+                    .pdf-markdown h3 { font-size: 14px; font-weight: bold; margin: 10px 0 5px 0; }
+                    .pdf-markdown p { font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+                    .pdf-markdown ul { margin-left: 20px; margin-bottom: 15px; font-size: 13px; }
+                    .pdf-markdown li { margin-bottom: 5px; line-height: 1.6; }
+                    .pdf-markdown strong { font-weight: bold; }
                 </style>
-                
-                <div class="pdf-raw">
-                    <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 25px;">
+                <div class="pdf-container">
+                    <div class="pdf-header">
                         <h1>Análise Trabalhista</h1>
-                        <p style="color: #6b7280; font-size: 14px;">Cliente: <strong>${casoSelecionadoNome}</strong></p>
+                        <p style="color: #6b7280; font-size: 14px; margin: 0;">Cliente: <strong style="color: #1f2937;">${casoSelecionadoNome}</strong></p>
+                    </div>
+                    
+                    <h2 class="pdf-section-title">1. Formulário Preenchido</h2>
+                    <div class="pdf-grid">
+                        ${dadosLimpos}
                     </div>
 
-                    <h2>1. Formulário Preenchido</h2>
-                    <div class="grid-pdf">
-                        ${dadosCrusHTML.replace(/text-gray-400 block text-xs/g, 'dado-lbl').replace(/text-gray-800/g, 'dado-val')}
-                    </div>
-
-                    <h2>2. Parecer da IA</h2>
-                    <div>
+                    <h2 class="pdf-section-title">2. Parecer da IA</h2>
+                    <div class="pdf-markdown">
                         ${markdownHTML}
                     </div>
                 </div>
             `;
-            
-            document.body.appendChild(pdfContainer);
-            
+
             const opt = {
                 margin:       15,
-                filename:     `Analise_${nomeFormatado}.pdf`,
+                filename:     `Analise_Trabalhista_${nomeFormatado}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, windowWidth: 800, scrollY: 0 },
+                html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Atraso intencional para garantir que o telemóvel carregou todo o DOM visível
-            setTimeout(() => {
-                html2pdf().set(opt).from(pdfContainer).save().then(() => {
-                    document.body.removeChild(pdfContainer); 
-                    document.body.removeChild(loadingOverlay); 
-                }).catch(e => {
-                    alert('Erro na geração do PDF no seu dispositivo.');
-                    document.body.removeChild(pdfContainer); 
-                    document.body.removeChild(loadingOverlay); 
-                });
-            }, 800);
+            html2pdf().set(opt).from(htmlString).save().then(() => {
+                document.body.removeChild(loadingOverlay); 
+            }).catch(e => {
+                alert('Erro na geração do PDF: ' + e.message);
+                document.body.removeChild(loadingOverlay); 
+            });
         }
 
         // ==========================================
